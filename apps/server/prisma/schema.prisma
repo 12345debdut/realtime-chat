@@ -1,0 +1,98 @@
+// Prisma schema — realtime chat server.
+// Kept intentionally small: User, Room, Membership, Message.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  handle       String       @unique
+  displayName  String
+  avatarUrl    String?
+  passwordHash String
+  createdAt    DateTime     @default(now())
+
+  memberships  Membership[]
+  messages     Message[]
+  refreshTokens RefreshToken[]
+
+  @@index([handle])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum RoomKind {
+  dm
+  group
+}
+
+model Room {
+  id                 String       @id @default(cuid())
+  kind               RoomKind
+  title              String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  lastMessagePreview String?
+  lastMessageAt      DateTime?
+
+  memberships Membership[]
+  messages    Message[]
+
+  @@index([updatedAt])
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  roomId    String
+  joinedAt  DateTime @default(now())
+  lastReadMessageId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([roomId])
+}
+
+enum MessageKind {
+  text
+  image
+  system
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  clientId   String      @unique // idempotency key from client
+  roomId     String
+  authorId   String
+  kind       MessageKind @default(text)
+  body       String
+  mediaUrl   String?
+  replyToId  String?
+  createdAt  DateTime    @default(now())
+  editedAt   DateTime?
+
+  room   Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+  @@index([authorId])
+}

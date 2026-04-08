@@ -1,0 +1,25 @@
+node_modules
+dist
+build
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+
+# RN
+ios/Pods
+ios/build
+android/build
+android/.gradle
+android/app/build
+android/.idea
+.vscode
+.idea
+*.iml
+*.hprof
+
+# misc
+coverage
+.tsbuildinfo
+.turbo

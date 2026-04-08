@@ -1,0 +1,34 @@
+# Keep the Fly/Docker build context tiny.
+# Only the server, its workspace deps, and yarn metadata need to ship.
+
+**/node_modules
+**/.DS_Store
+**/*.log
+
+# Mobile app — huge, not needed by the server image
+apps/mobile
+
+# Yarn caches we don't want baked into the image
+.yarn/cache
+.yarn/install-state.gz
+.yarn/unplugged
+.yarn/build-state.yml
+
+# Build artifacts
+apps/server/dist
+apps/server/node_modules
+packages/contracts/dist
+
+# Stale incremental build metadata — must not leak into the image,
+# otherwise tsc will read it, think nothing changed, and emit no files.
+**/*.tsbuildinfo
+
+# VCS + editor
+.git
+.github
+.vscode
+.idea
+
+# Docs that aren't needed in the image
+docs
+README.md
