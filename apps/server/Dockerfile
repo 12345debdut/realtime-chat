@@ -45,4 +45,4 @@ ENV PORT=4000
 COPY --from=build /app /app
 WORKDIR /app/apps/server
 EXPOSE 4000
-CMD ["sh", "-c", "yarn prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "yarn prisma db push --skip-generate && node dist/index.js"]

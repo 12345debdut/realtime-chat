@@ -21,6 +21,10 @@ model User {
   memberships  Membership[]
   messages     Message[]
   refreshTokens RefreshToken[]
+  sentRequests     ConnectionRequest[] @relation("SentRequests")
+  receivedRequests ConnectionRequest[] @relation("ReceivedRequests")
+  pins         RoomPin[]
+  tags         Tag[]
 
   @@index([handle])
 }
@@ -54,6 +58,8 @@ model Room {
 
   memberships Membership[]
   messages    Message[]
+  pins        RoomPin[]
+  roomTags    RoomTag[]
 
   @@index([updatedAt])
 }
@@ -70,6 +76,29 @@ model Membership {
 
   @@unique([userId, roomId])
   @@index([roomId])
+}
+
+enum ConnectionStatus {
+  pending
+  accepted
+  ignored
+}
+
+model ConnectionRequest {
+  id         String           @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     ConnectionStatus @default(pending)
+  message    String?          // optional first message
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  sender   User @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
 }
 
 enum MessageKind {
@@ -89,10 +118,50 @@ model Message {
   replyToId  String?
   createdAt  DateTime    @default(now())
   editedAt   DateTime?
+  deletedAt  DateTime?
 
   room   Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([roomId, createdAt])
   @@index([authorId])
+}
+
+model RoomPin {
+  id     String @id @default(cuid())
+  userId String
+  roomId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([userId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String   @default("#4ECDC4")
+  createdAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomTags RoomTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model RoomTag {
+  id     String @id @default(cuid())
+  roomId String
+  tagId  String
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, tagId])
+  @@index([tagId])
+  @@index([roomId])
 }

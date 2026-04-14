@@ -20,6 +20,7 @@ export const MessageSchema = z.object({
   status: MessageStatusSchema,
   createdAt: TimestampSchema,
   editedAt: TimestampSchema.nullable(),
+  deletedAt: TimestampSchema.nullable(),
 });
 export type Message = z.infer<typeof MessageSchema>;
 

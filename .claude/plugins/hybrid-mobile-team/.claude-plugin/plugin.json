@@ -1,0 +1,23 @@
+{
+  "name": "hybrid-mobile-team",
+  "description": "A 5-person engineering team for building and maintaining hybrid mobile apps. Includes a PM, backend engineer, frontend engineer, QA engineer, and tech lead — each with specialized skills and tool access. Orchestrated by a lead agent that plans work, dispatches tasks in parallel, and integrates results.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Debdut Saha",
+    "email": "debdut.saha.1@gmail.com"
+  },
+  "agents": ["./agents"],
+  "keywords": [
+    "react-native",
+    "mobile",
+    "hybrid",
+    "fastify",
+    "prisma",
+    "socket-io",
+    "watermelondb",
+    "reanimated",
+    "clean-architecture",
+    "team",
+    "orchestration"
+  ]
+}

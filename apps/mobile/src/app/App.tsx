@@ -14,7 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { useAuthStore } from '../features/auth/state/authStore';
+import { useAuthStore } from '../features/auth/presentation/state/authStore';
 import { RootNavigator } from '../navigation/RootNavigator';
 import { ThemeProvider } from '../ui/theme/ThemeProvider';
 

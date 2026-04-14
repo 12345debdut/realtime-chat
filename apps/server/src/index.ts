@@ -8,8 +8,11 @@ import Fastify from 'fastify';
 
 import { env } from './lib/env';
 import { authRoutes } from './routes/auth';
+import { connectionRoutes } from './routes/connections';
 import { meRoutes } from './routes/me';
 import { roomRoutes } from './routes/rooms';
+import { tagRoutes } from './routes/tags';
+import { userRoutes } from './routes/users';
 import { attachChatSockets } from './sockets/chat';
 
 async function main() {
@@ -28,6 +31,9 @@ async function main() {
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(roomRoutes);
+  await app.register(tagRoutes);
+  await app.register(userRoutes);
+  await app.register(connectionRoutes);
 
   app.get('/health', async () => ({ status: 'ok' }));
 

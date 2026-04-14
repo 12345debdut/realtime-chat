@@ -2092,6 +2092,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNVectorIcons (10.3.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNWorklets (0.8.1):
     - hermes-engine
     - RCTRequired
@@ -2252,6 +2274,7 @@ DEPENDENCIES:
   - RNKeychain (from `../../../node_modules/react-native-keychain`)
   - RNReanimated (from `../../../node_modules/react-native-reanimated`)
   - RNScreens (from `../../../node_modules/react-native-screens`)
+  - RNVectorIcons (from `../../../node_modules/react-native-vector-icons`)
   - RNWorklets (from `../../../node_modules/react-native-worklets`)
   - "simdjson (from `../../../node_modules/@nozbe/simdjson`)"
   - "WatermelonDB (from `../../../node_modules/@nozbe/watermelondb`)"
@@ -2421,6 +2444,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../../../node_modules/react-native-screens"
+  RNVectorIcons:
+    :path: "../../../node_modules/react-native-vector-icons"
   RNWorklets:
     :path: "../../../node_modules/react-native-worklets"
   simdjson:
@@ -2512,6 +2537,7 @@ SPEC CHECKSUMS:
   RNKeychain: 8955c9c09edf7dbfd708538ae0f40f3799f2e21e
   RNReanimated: 64f4b3b33b48b19e0ba76a352571b52b1e931981
   RNScreens: 01b065ded2dfe7987bcce770ff3a196be417ff41
+  RNVectorIcons: 97f26211c07d69e45b189f9dd0dbbe5e2d2b0b92
   RNWorklets: 533b896a04be761c26ec519014a6ccd0fac03781
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   WatermelonDB: 358332faedb8dd4aa699a178e308586e4e3a8b23

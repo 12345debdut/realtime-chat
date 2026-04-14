@@ -41,18 +41,33 @@ export async function issueRefresh(userId: string): Promise<string> {
   return raw;
 }
 
-/** Rotate: invalidate the presented refresh token and issue a fresh pair. */
+/** Rotate: invalidate the presented refresh token and issue a fresh pair.
+ *  Uses an atomic conditional update to prevent TOCTOU race conditions. */
 export async function rotateRefresh(
   presentedRaw: string,
 ): Promise<{ userId: string; handle: string; tokens: AuthTokens } | null> {
   const hash = sha256(presentedRaw);
+  const now = new Date();
+
+  // Atomic: only revoke if not already revoked and not expired.
+  // If two concurrent requests race, only one will match (count === 1).
+  const result = await prisma.refreshToken.updateMany({
+    where: {
+      tokenHash: hash,
+      revokedAt: null,
+      expiresAt: { gt: now },
+    },
+    data: { revokedAt: now },
+  });
+
+  if (result.count === 0) return null;
+
+  // Now fetch the user data (the token is already revoked, so this is safe)
   const row = await prisma.refreshToken.findUnique({
     where: { tokenHash: hash },
     include: { user: true },
   });
-  if (!row || row.revokedAt || row.expiresAt < new Date()) return null;
-
-  await prisma.refreshToken.update({ where: { id: row.id }, data: { revokedAt: new Date() } });
+  if (!row) return null;
 
   const { token: access, expiresAt } = signAccess({ sub: row.user.id, handle: row.user.handle });
   const refresh = await issueRefresh(row.user.id);

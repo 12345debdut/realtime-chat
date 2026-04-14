@@ -1,7 +1,16 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { motion, palettes, radii, spacing, typography, type Palette, type ThemeMode } from './tokens';
+import {
+  motion,
+  palettes,
+  radii,
+  spacing,
+  typography,
+  type Palette,
+  type PaletteKey,
+  type ThemeMode,
+} from './tokens';
 
 export interface Theme {
   mode: ThemeMode;
@@ -38,3 +47,6 @@ export function useTheme(): Theme {
   if (!ctx) throw new Error('useTheme must be used inside <ThemeProvider>');
   return ctx;
 }
+
+/** Type-safe palette key helper for components that accept color props */
+export type ColorProp = PaletteKey;
