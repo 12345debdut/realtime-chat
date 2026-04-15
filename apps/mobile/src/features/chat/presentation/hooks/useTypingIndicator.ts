@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { EventNames, type S2C_Typing } from '@rtc/contracts';
 
 import { getSocket } from '../../../../foundation/network/socket';
+import { kv, KvKeys } from '../../../../foundation/storage/kv';
 import { onSyncEvent } from '../../data/SyncEngine';
 
 /** Minimum gap between typing:start re-emits during continuous typing. */
@@ -44,6 +45,8 @@ export function useTypingIndicator(roomId: string): UseTypingIndicatorReturn {
   // ── Helpers ──────────────────────────────────────────────────────────
 
   const emitStart = useCallback(() => {
+    // Skip if user disabled typing indicators
+    if (kv.getBoolean(KvKeys.PrivacyTypingIndicators) === false) return;
     const socket = getSocket();
     if (socket?.connected) {
       socket.emit(EventNames.TypingStart, { roomId });
@@ -51,6 +54,7 @@ export function useTypingIndicator(roomId: string): UseTypingIndicatorReturn {
   }, [roomId]);
 
   const emitStop = useCallback(() => {
+    if (kv.getBoolean(KvKeys.PrivacyTypingIndicators) === false) return;
     const socket = getSocket();
     if (socket?.connected) {
       socket.emit(EventNames.TypingStop, { roomId });

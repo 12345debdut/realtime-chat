@@ -39,13 +39,13 @@ export function LoginScreen() {
           <View
             style={[
               styles.logoIcon,
-              { backgroundColor: theme.colors.primary },
+              { backgroundColor: theme.colors.primaryContainer },
             ]}
           >
-            <MaterialCommunityIcons name="chat" size={28} color={theme.colors.onPrimary} />
+            <MaterialCommunityIcons name="chat" size={28} color={theme.colors.inverseSurface} />
           </View>
           <Text variant="headline" color="primary" style={{ marginTop: theme.spacing.sm }}>
-            Forest Chat
+            Lumina
           </Text>
         </View>
 
@@ -56,7 +56,7 @@ export function LoginScreen() {
           </Text>
           <Text variant="body" color="textMuted" align="center" style={{ marginTop: theme.spacing.xs }}>
             {isSignUp
-              ? 'Join Forest Chat and start your conversations.'
+              ? 'Join Lumina and start your conversations.'
               : 'Enter your credentials to continue your conversations.'}
           </Text>
         </View>
@@ -211,7 +211,7 @@ export function LoginScreen() {
         {/* Toggle */}
         <View style={styles.toggleRow}>
           <Text variant="caption" color="textMuted">
-            {isSignUp ? 'Already have an account? ' : 'New to Forest Chat? '}
+            {isSignUp ? 'Already have an account? ' : 'New to Lumina?'}
           </Text>
           <Pressable onPress={() => setIsSignUp(!isSignUp)} hitSlop={8}>
             <Text variant="caption" color="primary" style={{ fontWeight: '600' }}>

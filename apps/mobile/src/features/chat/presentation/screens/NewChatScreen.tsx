@@ -1,5 +1,10 @@
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FlashList } from '@shopify/flash-list';
@@ -9,7 +14,16 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { User } from '@rtc/contracts';
 
 import type { RootStackParamList } from '../../../../navigation/types';
-import { Avatar, IconButton, PressableScale, SearchBar, Text, Toast, useTheme } from '../../../../ui';
+import {
+  Avatar,
+  IconButton,
+  PressableScale,
+  SearchBar,
+  Text,
+  Toast,
+  useTheme,
+} from '../../../../ui';
+import { BottomSheet } from '../../../../ui/BottomSheet';
 import { useUsers } from '../../../users/presentation/hooks/useUsers';
 import {
   useSendConnectionRequest,
@@ -31,14 +45,30 @@ export function NewChatScreen() {
   });
 
   const [loadingToast, setLoadingToast] = useState<{ visible: boolean }>({
-    visible: false
+    visible: false,
   });
 
-  const handleUserPress = useCallback(
-    async (user: User) => {
+  // ── Note dialog state ──────────────────────────────────────────────
+  const [noteSheetVisible, setNoteSheetVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [note, setNote] = useState('');
+  const noteInputRef = useRef<TextInput>(null);
+
+  const handleUserPress = useCallback((user: User) => {
+    setSelectedUser(user);
+    setNote('');
+    setNoteSheetVisible(true);
+  }, []);
+
+  const doSendRequest = useCallback(
+    async (user: User, message?: string) => {
+      setNoteSheetVisible(false);
+      setSelectedUser(null);
       setLoadingToast({ visible: true });
-      const result = await sendRequest(user.id);
+
+      const result = await sendRequest(user.id, message || undefined);
       setLoadingToast({ visible: false });
+
       if (result?.alreadyConnected) {
         removeUser(user.id);
         navigation.goBack();
@@ -49,7 +79,6 @@ export function NewChatScreen() {
           });
         }, 100);
       } else if (result) {
-        // New connection request sent successfully
         removeUser(user.id);
         setToast({ visible: true, message: `Request sent to ${user.displayName}`, variant: 'success' });
       } else if (progress === SendRequestProgress.NetworkError) {
@@ -65,12 +94,21 @@ export function NewChatScreen() {
           variant: 'error',
         });
       } else {
-        // Duplicate request — still counts as success feedback
         setToast({ visible: true, message: `Request already sent to ${user.displayName}`, variant: 'info' });
       }
     },
     [navigation, sendRequest, progress, removeUser],
   );
+
+  const handleSendWithNote = useCallback(() => {
+    if (!selectedUser) return;
+    doSendRequest(selectedUser, note.trim());
+  }, [selectedUser, note, doSendRequest]);
+
+  const handleSendWithoutNote = useCallback(() => {
+    if (!selectedUser) return;
+    doSendRequest(selectedUser);
+  }, [selectedUser, doSendRequest]);
 
   const hideToast = useCallback(() => {
     setToast((prev) => ({ ...prev, visible: false }));
@@ -136,6 +174,127 @@ export function NewChatScreen() {
         />
       )}
 
+      {/* ── Note Bottom Sheet ─────────────────────────────────────────── */}
+      <BottomSheet
+        visible={noteSheetVisible}
+        onClose={() => {
+          setNoteSheetVisible(false);
+          setSelectedUser(null);
+        }}
+      >
+        {selectedUser && (
+          <View style={styles.noteSheetContent}>
+            {/* User preview */}
+            <View style={styles.noteUserRow}>
+              <Avatar
+                uri={selectedUser.avatarUrl ?? undefined}
+                name={selectedUser.displayName}
+                size={44}
+              />
+              <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
+                <Text variant="titleSm">{selectedUser.displayName}</Text>
+                <Text variant="micro" color="textMuted">@{selectedUser.handle}</Text>
+              </View>
+            </View>
+
+            {/* Label */}
+            <Text
+              variant="caption"
+              color="textSecondary"
+              style={{ marginTop: theme.spacing.lg, marginBottom: theme.spacing.sm }}
+            >
+              Add a note (optional)
+            </Text>
+
+            {/* Note input */}
+            <TextInput
+              ref={noteInputRef}
+              value={note}
+              onChangeText={setNote}
+              placeholder="Say something nice..."
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              maxLength={200}
+              style={[
+                styles.noteInput,
+                {
+                  backgroundColor: theme.colors.surfaceContainerHigh,
+                  color: theme.colors.text,
+                  borderRadius: theme.radii.md,
+                  fontFamily: theme.typography.body.fontFamily,
+                  fontSize: theme.typography.body.fontSize,
+                },
+              ]}
+            />
+
+            {/* Character count */}
+            {note.length > 0 && (
+              <Text
+                variant="micro"
+                color="textMuted"
+                style={{ alignSelf: 'flex-end', marginTop: 4 }}
+              >
+                {note.length}/200
+              </Text>
+            )}
+
+            {/* Action buttons */}
+            <View style={[styles.noteActions, { marginTop: theme.spacing.lg, gap: theme.spacing.sm }]}>
+              {note.trim().length > 0 ? (
+                <>
+                  <PressableScale
+                    scaleTo={0.96}
+                    onPress={handleSendWithNote}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 14,
+                      borderRadius: theme.radii.sm,
+                      backgroundColor: theme.colors.inverseSurface,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text variant="caption" style={{ color: theme.colors.inverseOnSurface, fontWeight: '600' }}>
+                      Send with Note
+                    </Text>
+                  </PressableScale>
+                  <PressableScale
+                    scaleTo={0.96}
+                    onPress={handleSendWithoutNote}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 14,
+                      borderRadius: theme.radii.sm,
+                      backgroundColor: theme.colors.surfaceContainerHigh,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text variant="caption" color="textSecondary" style={{ fontWeight: '600' }}>
+                      Skip Note
+                    </Text>
+                  </PressableScale>
+                </>
+              ) : (
+                <PressableScale
+                  scaleTo={0.96}
+                  onPress={handleSendWithoutNote}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: theme.radii.sm,
+                    backgroundColor: theme.colors.inverseSurface,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text variant="caption" style={{ color: theme.colors.inverseOnSurface, fontWeight: '600' }}>
+                    Send Request
+                  </Text>
+                </PressableScale>
+              )}
+            </View>
+          </View>
+        )}
+      </BottomSheet>
+
       <Toast
         visible={loadingToast.visible}
         message={'Sending request...'}
@@ -164,5 +323,25 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  noteSheetContent: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  noteUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noteInput: {
+    minHeight: 80,
+    maxHeight: 120,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    textAlignVertical: 'top',
+  },
+  noteActions: {
+    flexDirection: 'row',
   },
 });

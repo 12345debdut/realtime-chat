@@ -52,6 +52,9 @@ export function Avatar({
             width: size,
             height: size,
             borderRadius: size / 2,
+            // Editorial portrait treatment — subtle surface-variant border
+            borderWidth: 1,
+            borderColor: theme.colors.outlineVariant + '26',
           }}
         />
       ) : (

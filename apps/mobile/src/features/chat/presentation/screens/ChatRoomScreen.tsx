@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
-import { Alert, FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { KeyboardAvoidingView, KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -9,9 +9,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../../../navigation/types';
 import type { MessageModel } from '../../../../foundation/storage/models/MessageModel';
-import { Avatar, IconButton, Text, useTheme } from '../../../../ui';
+import { Avatar, BottomSheet, BottomSheetAction, BottomSheetHeader, IconButton, Text, useTheme } from '../../../../ui';
 import { messageRepository } from '../../data/MessageRepository';
 import { onSyncEvent } from '../../data/SyncEngine';
+import { DateDivider, shouldShowDivider } from '../components/DateDivider';
 import { InputBar, type ReplyContext } from '../components/InputBar';
 import { MessageBubble, type ReplyPreview } from '../components/MessageBubble';
 import { TypingDots } from '../components/TypingDots';
@@ -46,6 +47,7 @@ function useIsOnline(): boolean {
 interface MessageRowProps {
   item: MessageModel;
   currentUserId: string;
+  showDateDivider: boolean;
   highlightedIdRef: React.RefObject<string | null>;
   getReplyPreviewRef: React.RefObject<(id: string | null) => ReplyPreview | null>;
   onReply: (messageId: string, serverId: string | null, authorId: string, body: string) => void;
@@ -57,6 +59,7 @@ interface MessageRowProps {
 const MessageRow = memo(function MessageRow({
   item,
   currentUserId,
+  showDateDivider,
   highlightedIdRef,
   getReplyPreviewRef,
   onReply,
@@ -103,20 +106,23 @@ const MessageRow = memo(function MessageRow({
   );
 
   return (
-    <MessageBubble
-      id={item.id}
-      body={item.body}
-      fromSelf={fromSelf}
-      status={item.status}
-      createdAt={item.createdAt.getTime()}
-      replyPreview={replyPreview}
-      highlighted={isHighlighted}
-      isDeleted={isDeleted}
-      onReply={isDeleted ? undefined : handleReply}
-      onQuotePress={!isDeleted && item.replyToId ? handleQuotePress : undefined}
-      onRetry={!isDeleted && fromSelf && item.status === 'failed' ? handleRetry : undefined}
-      onDelete={fromSelf && !isDeleted && item.serverId ? handleDelete : undefined}
-    />
+    <>
+      <MessageBubble
+        id={item.id}
+        body={item.body}
+        fromSelf={fromSelf}
+        status={item.status}
+        createdAt={item.createdAt.getTime()}
+        replyPreview={replyPreview}
+        highlighted={isHighlighted}
+        isDeleted={isDeleted}
+        onReply={isDeleted ? undefined : handleReply}
+        onQuotePress={!isDeleted && item.replyToId ? handleQuotePress : undefined}
+        onRetry={!isDeleted && fromSelf && item.status === 'failed' ? handleRetry : undefined}
+        onDelete={fromSelf && !isDeleted && item.serverId ? handleDelete : undefined}
+      />
+      {showDateDivider && <DateDivider timestamp={item.createdAt.getTime()} />}
+    </>
   );
 }, (prev, next) => {
   // WatermelonDB reuses Model object references — default shallow memo sees
@@ -129,6 +135,7 @@ const MessageRow = memo(function MessageRow({
   if (p.status !== n.status) return false;
   if (p.serverId !== n.serverId) return false;
   if (p.deletedAt?.getTime() !== n.deletedAt?.getTime()) return false;
+  if (prev.showDateDivider !== next.showDateDivider) return false;
   if (prev.currentUserId !== next.currentUserId) return false;
   if (prev.onReply !== next.onReply) return false;
   if (prev.onQuotePress !== next.onQuotePress) return false;
@@ -243,25 +250,26 @@ export function ChatRoomScreen({ route }: Props) {
     setReplyTo(null);
   }, []);
 
+  // Delete message bottom sheet state
+  const [deleteTarget, setDeleteTarget] = useState<{ serverId: string; roomId: string } | null>(null);
+
   const handleDelete = useCallback(
     (serverId: string, msgRoomId: string) => {
-      Alert.alert(
-        'Delete Message',
-        'Are you sure you want to delete this message? The other person will see "This message was deleted".',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: () => {
-              void messageRepository.deleteMessage(serverId, msgRoomId);
-            },
-          },
-        ],
-      );
+      setDeleteTarget({ serverId, roomId: msgRoomId });
     },
     [],
   );
+
+  const confirmDeleteMessage = useCallback(() => {
+    if (deleteTarget) {
+      void messageRepository.deleteMessage(deleteTarget.serverId, deleteTarget.roomId);
+    }
+    setDeleteTarget(null);
+  }, [deleteTarget]);
+
+  const closeDeleteSheet = useCallback(() => {
+    setDeleteTarget(null);
+  }, []);
 
   const handleSend = useCallback(
     (body: string, replyToId?: string) => {
@@ -278,6 +286,23 @@ export function ChatRoomScreen({ route }: Props) {
     [scrollToMessage],
   );
 
+  // ── Date divider set ──
+  // Pre-compute which messages should show a date divider above them.
+  // In the inverted list, messages are desc (newest first). A divider
+  // should appear when a message's date differs from the next item in the
+  // array (which is the previous message chronologically and appears above).
+  const dateDividerSet = useMemo(() => {
+    const set = new Set<string>();
+    for (let i = 0; i < messages.length; i++) {
+      const curr = messages[i].createdAt.getTime();
+      const next = i + 1 < messages.length ? messages[i + 1].createdAt.getTime() : undefined;
+      if (shouldShowDivider(curr, next)) {
+        set.add(messages[i].id);
+      }
+    }
+    return set;
+  }, [messages]);
+
   // ── Stable FlashList props ──
   const keyExtractor = useCallback((m: MessageModel) => m.id, []);
 
@@ -288,6 +313,7 @@ export function ChatRoomScreen({ route }: Props) {
       <MessageRow
         item={item}
         currentUserId={currentUserId}
+        showDateDivider={dateDividerSet.has(item.id)}
         highlightedIdRef={highlightedIdRef}
         getReplyPreviewRef={getReplyPreviewRef}
         onReply={handleReply}
@@ -296,7 +322,7 @@ export function ChatRoomScreen({ route }: Props) {
         onDelete={handleDelete}
       />
     ),
-    [currentUserId, handleReply, handleQuotePress, retry, handleDelete],
+    [currentUserId, dateDividerSet, handleReply, handleQuotePress, retry, handleDelete],
   );
 
   const typingHeader = useMemo(() => <TypingDots visible={typingVisible} />, [typingVisible]);
@@ -322,13 +348,14 @@ export function ChatRoomScreen({ route }: Props) {
               name={title}
               size={36}
               showStatus={peerOnline}
+              statusColor={theme.colors.primary}
               style={{ marginLeft: 4 }}
             />
             <View style={{ marginLeft: theme.spacing.md, flex: 1 }}>
               <Text variant="titleSm" numberOfLines={1}>
                 {title}
               </Text>
-              <Text variant="micro" color={peerOnline ? 'success' : 'textMuted'}>
+              <Text variant="micro" color={peerOnline ? 'textSecondary' : 'textMuted'}>
                 {peerOnline ? 'Active now' : 'Offline'}
               </Text>
             </View>
@@ -337,9 +364,9 @@ export function ChatRoomScreen({ route }: Props) {
         </View>
 
         {!isOnline && (
-          <View style={[styles.offlineBanner, { backgroundColor: '#FFF3E0' }]}>
-            <MaterialCommunityIcons name="wifi-off" size={16} color="#E65100" />
-            <Text variant="caption" style={{ color: '#E65100', marginLeft: 8, flex: 1 }}>
+          <View style={[styles.offlineBanner, { backgroundColor: theme.colors.primarySoft }]}>
+            <MaterialCommunityIcons name="wifi-off" size={16} color={theme.colors.primary} />
+            <Text variant="caption" style={{ color: theme.colors.primary, marginLeft: 8, flex: 1 }}>
               You're offline. Messages will be sent when you reconnect.
             </Text>
           </View>
@@ -366,6 +393,27 @@ export function ChatRoomScreen({ route }: Props) {
           />
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Delete message bottom sheet */}
+      <BottomSheet visible={deleteTarget !== null} onClose={closeDeleteSheet}>
+        <BottomSheetHeader>
+          <Text variant="caption" color="textMuted">
+            Are you sure? The other person will see "This message was deleted".
+          </Text>
+        </BottomSheetHeader>
+        <BottomSheetAction
+          label="Delete"
+          icon="delete-outline"
+          labelColor={theme.colors.danger}
+          iconColor={theme.colors.danger}
+          onPress={confirmDeleteMessage}
+        />
+        <BottomSheetAction
+          label="Cancel"
+          icon="close"
+          onPress={closeDeleteSheet}
+        />
+      </BottomSheet>
     </KeyboardProvider>
   );
 }

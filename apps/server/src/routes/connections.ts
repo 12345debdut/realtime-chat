@@ -23,7 +23,7 @@ import { getIO, getUserSockets } from '../sockets/chat';
 
 // ── Prisma result types used by shapers ─────────────────────────────────────
 
-type PrismaUserSelect = Pick<PrismaUser, 'id' | 'handle' | 'displayName' | 'avatarUrl' | 'createdAt'>;
+type PrismaUserSelect = Pick<PrismaUser, 'id' | 'handle' | 'displayName' | 'avatarUrl' | 'readReceiptsEnabled' | 'onlineStatusVisible' | 'typingIndicatorsEnabled' | 'createdAt'>;
 
 type PrismaRequestWithSender = PrismaConnectionRequest & {
   sender: PrismaUserSelect;
@@ -103,7 +103,7 @@ export async function connectionRoutes(app: FastifyInstance) {
       });
       const updated = await prisma.connectionRequest.findUnique({
         where: { id: existing.id },
-        include: { sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, createdAt: true } } },
+        include: { sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, readReceiptsEnabled: true, onlineStatusVisible: true, typingIndicatorsEnabled: true, createdAt: true } } },
       });
 
       // Notify receiver via socket (was missing for re-sent requests after ignore)
@@ -124,7 +124,7 @@ export async function connectionRoutes(app: FastifyInstance) {
         receiverId: body.data.receiverId,
         message: body.data.message ?? null,
       },
-      include: { sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, createdAt: true } } },
+      include: { sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, readReceiptsEnabled: true, onlineStatusVisible: true, typingIndicatorsEnabled: true, createdAt: true } } },
     });
 
     // Notify receiver via socket
@@ -144,7 +144,7 @@ export async function connectionRoutes(app: FastifyInstance) {
     const userId = req.user!.sub;
     const requests = await prisma.connectionRequest.findMany({
       where: { receiverId: userId, status: 'pending' },
-      include: { sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, createdAt: true } } },
+      include: { sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, readReceiptsEnabled: true, onlineStatusVisible: true, typingIndicatorsEnabled: true, createdAt: true } } },
       orderBy: { createdAt: 'desc' },
     });
     const response: ConnectionRequestWithUser[] = requests.map(shapeRequestWithUser);
@@ -186,7 +186,7 @@ export async function connectionRoutes(app: FastifyInstance) {
     const userId = req.user!.sub;
     const requests = await prisma.connectionRequest.findMany({
       where: { senderId: userId, status: 'pending' },
-      include: { receiver: { select: { id: true, handle: true, displayName: true, avatarUrl: true, createdAt: true } } },
+      include: { receiver: { select: { id: true, handle: true, displayName: true, avatarUrl: true, readReceiptsEnabled: true, onlineStatusVisible: true, typingIndicatorsEnabled: true, createdAt: true } } },
       orderBy: { createdAt: 'desc' },
     });
     const response: SentConnectionRequestWithUser[] = requests.map(shapeRequestWithReceiver);
@@ -228,8 +228,8 @@ export async function connectionRoutes(app: FastifyInstance) {
         OR: [{ senderId: userId }, { receiverId: userId }],
       },
       include: {
-        sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, createdAt: true } },
-        receiver: { select: { id: true, handle: true, displayName: true, avatarUrl: true, createdAt: true } },
+        sender: { select: { id: true, handle: true, displayName: true, avatarUrl: true, readReceiptsEnabled: true, onlineStatusVisible: true, typingIndicatorsEnabled: true, createdAt: true } },
+        receiver: { select: { id: true, handle: true, displayName: true, avatarUrl: true, readReceiptsEnabled: true, onlineStatusVisible: true, typingIndicatorsEnabled: true, createdAt: true } },
       },
       orderBy: { updatedAt: 'desc' },
     });
@@ -408,6 +408,11 @@ function shapeUser(u: PrismaUserSelect): User {
     handle: u.handle,
     displayName: u.displayName,
     avatarUrl: u.avatarUrl,
+    privacy: {
+      readReceiptsEnabled: u.readReceiptsEnabled,
+      onlineStatusVisible: u.onlineStatusVisible,
+      typingIndicatorsEnabled: u.typingIndicatorsEnabled,
+    },
     createdAt: u.createdAt.getTime(),
   };
 }

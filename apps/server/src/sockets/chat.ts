@@ -28,6 +28,7 @@ import {
 } from '@rtc/contracts';
 
 import { prisma } from '../lib/prisma';
+import { getPrivacy } from '../lib/privacyCache';
 import { pubClient, redis, subClient } from '../lib/redis';
 import { verifyAccess, type AccessPayload } from '../lib/tokens';
 
@@ -126,11 +127,15 @@ export function attachChatSockets(http: unknown) {
       // 1) Tell OTHER members in this room that this user is online.
       //    (This replaces the old broadcastPresence on connect, which
       //     fired before the socket had joined any rooms.)
-      socket.to(`room:${roomId}`).emit(EventNames.Presence, {
-        userId,
-        online: true,
-        lastSeenAt: null,
-      });
+      // Privacy: only broadcast online status if user allows it
+      const privacy = await getPrivacy(userId);
+      if (privacy.onlineStatusVisible) {
+        socket.to(`room:${roomId}`).emit(EventNames.Presence, {
+          userId,
+          online: true,
+          lastSeenAt: null,
+        });
+      }
 
       // 2) Tell THIS user about the current presence of other members.
       //    Uses Redis as source of truth (heartbeat-refreshed TTL keys).
@@ -236,6 +241,11 @@ export function attachChatSockets(http: unknown) {
         where: { userId_roomId: { userId, roomId: parsed.data.roomId } },
       });
       if (!membership) return;
+
+      // Privacy: don't broadcast if user disabled typing indicators
+      const typingPrivacy = await getPrivacy(userId);
+      if (!typingPrivacy.typingIndicatorsEnabled) return;
+
       socket.to(`room:${parsed.data.roomId}`).emit(EventNames.Typing, {
         roomId: parsed.data.roomId,
         userId,
@@ -249,6 +259,11 @@ export function attachChatSockets(http: unknown) {
         where: { userId_roomId: { userId, roomId: parsed.data.roomId } },
       });
       if (!membership) return;
+
+      // Privacy: don't broadcast if user disabled typing indicators
+      const stopPrivacy = await getPrivacy(userId);
+      if (!stopPrivacy.typingIndicatorsEnabled) return;
+
       socket.to(`room:${parsed.data.roomId}`).emit(EventNames.Typing, {
         roomId: parsed.data.roomId,
         userId,
@@ -298,10 +313,17 @@ export function attachChatSockets(http: unknown) {
         where: { userId_roomId: { userId, roomId: parsed.data.roomId } },
       });
       if (!membership) return;
+
+      // Always update the server-side read position (for unread counts)
       await prisma.membership.update({
         where: { userId_roomId: { userId, roomId: parsed.data.roomId } },
         data: { lastReadMessageId: parsed.data.upToMessageId },
       });
+
+      // Privacy: only BROADCAST the receipt to others if enabled
+      const receiptPrivacy = await getPrivacy(userId);
+      if (!receiptPrivacy.readReceiptsEnabled) return;
+
       io.to(`room:${parsed.data.roomId}`).emit(EventNames.ReadReceiptBroadcast, {
         roomId: parsed.data.roomId,
         userId,
@@ -327,6 +349,9 @@ async function markOffline(userId: string) {
  */
 async function broadcastPresence(io: Server, userId: string, online: boolean) {
   try {
+    const privacy = await getPrivacy(userId);
+    if (!privacy.onlineStatusVisible) return;
+
     const memberships = await prisma.membership.findMany({
       where: { userId },
       select: { roomId: true },

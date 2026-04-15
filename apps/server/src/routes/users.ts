@@ -57,7 +57,7 @@ export async function userRoutes(app: FastifyInstance) {
             }
           : {}),
       },
-      select: { id: true, handle: true, displayName: true, avatarUrl: true, createdAt: true },
+      select: { id: true, handle: true, displayName: true, avatarUrl: true, readReceiptsEnabled: true, onlineStatusVisible: true, typingIndicatorsEnabled: true, createdAt: true },
       orderBy: { displayName: 'asc' },
       take: 50,
     });
@@ -68,6 +68,11 @@ export async function userRoutes(app: FastifyInstance) {
         handle: u.handle,
         displayName: u.displayName,
         avatarUrl: u.avatarUrl,
+        privacy: {
+          readReceiptsEnabled: u.readReceiptsEnabled,
+          onlineStatusVisible: u.onlineStatusVisible,
+          typingIndicatorsEnabled: u.typingIndicatorsEnabled,
+        },
         createdAt: u.createdAt.getTime(),
       })),
     );
