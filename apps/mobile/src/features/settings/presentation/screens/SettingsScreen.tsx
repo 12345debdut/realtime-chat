@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useNavigation } from '@react-navigation/native';
@@ -7,7 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useAuthStore } from '../../../auth/presentation/state/authStore';
 import type { RootStackParamList } from '../../../../navigation/types';
-import { Avatar, Icon, ListItem, PressableScale, SectionHeader, Text, Toast, useTheme } from '../../../../ui';
+import { Avatar, BottomSheet, Icon, ListItem, PressableScale, SectionHeader, Text, Toast, useTheme } from '../../../../ui';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -28,6 +28,8 @@ export function SettingsScreen() {
   const comingSoon = useCallback(() => {
     showToast('Coming soon!');
   }, [showToast]);
+
+  const [aboutVisible, setAboutVisible] = useState(false);
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.surface }]} edges={['top']}>
@@ -89,7 +91,7 @@ export function SettingsScreen() {
         <ListItem
           icon="shield-lock-outline"
           title="Privacy & Security"
-          onPress={comingSoon}
+          onPress={() => navigation.navigate('Privacy')}
         />
 
         {/* Preferences Section */}
@@ -139,7 +141,7 @@ export function SettingsScreen() {
               v 1.0.0
             </Text>
           }
-          onPress={() => Alert.alert('About', 'Forest Chat v1.0.0\nBuilt with React Native')}
+          onPress={() => setAboutVisible(true)}
         />
 
         {/* Log Out */}
@@ -161,6 +163,14 @@ export function SettingsScreen() {
         </Pressable>
       </ScrollView>
       <Toast visible={toastVisible} message={toastMessage} variant="info" onHide={() => setToastVisible(false)} />
+
+      <BottomSheet visible={aboutVisible} onClose={() => setAboutVisible(false)}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 20, alignItems: 'center', gap: 8 }}>
+          <Text variant="title">Lumina</Text>
+          <Text variant="body" color="textMuted">v 1.0.0</Text>
+          <Text variant="caption" color="textMuted">Built with React Native</Text>
+        </View>
+      </BottomSheet>
     </SafeAreaView>
   );
 }

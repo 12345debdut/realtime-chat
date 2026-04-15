@@ -16,6 +16,12 @@ model User {
   displayName  String
   avatarUrl    String?
   passwordHash String
+
+  // Privacy settings (server-synced)
+  readReceiptsEnabled      Boolean @default(true)
+  onlineStatusVisible      Boolean @default(true)
+  typingIndicatorsEnabled  Boolean @default(true)
+
   createdAt    DateTime     @default(now())
 
   memberships  Membership[]

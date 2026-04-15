@@ -35,4 +35,11 @@ export const KvKeys = {
   CurrentUserId: 'auth.currentUserId',
   CurrentUser: 'auth.currentUser',
   LastLoggedInUserId: 'auth.lastLoggedInUserId',
+  // Privacy — server-synced (cached locally for instant UI)
+  PrivacyReadReceipts: 'privacy.readReceiptsEnabled',
+  PrivacyOnlineStatus: 'privacy.onlineStatusVisible',
+  PrivacyTypingIndicators: 'privacy.typingIndicatorsEnabled',
+  // Privacy — device-local only (never sent to server)
+  PrivacyBiometricLock: 'privacy.biometricLock',
+  PrivacyScreenSecurity: 'privacy.screenSecurity',
 } as const;

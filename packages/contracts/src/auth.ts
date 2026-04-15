@@ -2,11 +2,22 @@ import { z } from 'zod';
 
 import { IdSchema, TimestampSchema } from './primitives';
 
+export const PrivacySettingsSchema = z.object({
+  readReceiptsEnabled: z.boolean(),
+  onlineStatusVisible: z.boolean(),
+  typingIndicatorsEnabled: z.boolean(),
+});
+export type PrivacySettings = z.infer<typeof PrivacySettingsSchema>;
+
+export const PrivacySettingsUpdateSchema = PrivacySettingsSchema.partial();
+export type PrivacySettingsUpdate = z.infer<typeof PrivacySettingsUpdateSchema>;
+
 export const UserSchema = z.object({
   id: IdSchema,
   handle: z.string().min(3).max(32),
   displayName: z.string().min(1).max(64),
   avatarUrl: z.string().url().nullable(),
+  privacy: PrivacySettingsSchema,
   createdAt: TimestampSchema,
 });
 export type User = z.infer<typeof UserSchema>;

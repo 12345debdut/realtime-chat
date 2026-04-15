@@ -58,9 +58,14 @@
 	<false/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>MaterialCommunityIcons.ttf</string>
 		<string>AntDesign.ttf</string>
 		<string>Ionicons.ttf</string>
+		<string>MaterialCommunityIcons.ttf</string>
+		<string>MaterialIcons.ttf</string>
+		<string>Montserrat-Regular.ttf</string>
+		<string>Montserrat-Medium.ttf</string>
+		<string>Montserrat-SemiBold.ttf</string>
+		<string>Montserrat-Bold.ttf</string>
 	</array>
 </dict>
 </plist>

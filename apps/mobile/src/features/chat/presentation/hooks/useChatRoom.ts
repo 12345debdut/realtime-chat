@@ -55,6 +55,9 @@ export function useChatRoom(roomId: string) {
   useEffect(() => {
     if (!messages.length || !currentUserId) return;
 
+    // WhatsApp bilateral model: if you disable read receipts, you don't send them
+    if (kv.getBoolean(KvKeys.PrivacyReadReceipts) === false) return;
+
     // Find the latest message from someone else that has a serverId
     const latestFromOther = messages.find(
       (m) => m.authorId !== currentUserId && m.serverId,

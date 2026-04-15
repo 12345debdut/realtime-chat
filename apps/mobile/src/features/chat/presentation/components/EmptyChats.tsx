@@ -1,9 +1,14 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
+import type { RootStackParamList } from '../../../../navigation/types';
 import { Button, Icon, PressableScale, Text, useTheme } from '../../../../ui';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Props {
   onStartChat: () => void;
@@ -11,9 +16,14 @@ interface Props {
 
 export function EmptyChats({ onStartChat }: Props) {
   const theme = useTheme();
+  const navigation = useNavigation<Nav>();
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Illustration placeholder */}
       <View
         style={[
@@ -67,15 +77,16 @@ export function EmptyChats({ onStartChat }: Props) {
 
       {/* Quick Actions Grid */}
       <View style={[styles.grid, { marginTop: theme.spacing.xxl }]}>
-        {[
-          { icon: 'import', label: 'Import\nContacts' },
-          { icon: 'account-group', label: 'Create\nGroup' },
-          { icon: 'qrcode', label: 'My QR\nCode' },
-          { icon: 'shield-lock-outline', label: 'Privacy' },
-        ].map((item) => (
+        {([
+          { icon: 'import', label: 'Import\nContacts', onPress: undefined },
+          { icon: 'account-group', label: 'Create\nGroup', onPress: undefined },
+          { icon: 'qrcode', label: 'My QR\nCode', onPress: undefined },
+          { icon: 'shield-lock-outline', label: 'Privacy', onPress: () => navigation.navigate('Privacy') },
+        ] as const).map((item) => (
           <PressableScale
             key={item.label}
             scaleTo={0.95}
+            onPress={item.onPress}
             style={{
               width: '44%',
               backgroundColor: theme.colors.surfaceContainerLow,
@@ -92,12 +103,13 @@ export function EmptyChats({ onStartChat }: Props) {
           </PressableScale>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  scroll: { flex: 1 },
+  container: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 40, paddingBottom: 120 },
   illustration: {
     width: 120,
     height: 120,

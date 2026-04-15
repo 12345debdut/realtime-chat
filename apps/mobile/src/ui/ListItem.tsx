@@ -47,7 +47,7 @@ export function ListItem({
           style={{
             width: 40,
             height: 40,
-            borderRadius: theme.radii.sm,
+            borderRadius: theme.radii.md,
             backgroundColor: theme.colors.surfaceContainerLow,
             alignItems: 'center',
             justifyContent: 'center',

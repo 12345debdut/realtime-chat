@@ -159,12 +159,12 @@ export function InputBar({ onSend, onTypingChange, replyTo, onCancelReply }: Pro
             onPress={handleSend}
             accessibilityRole="button"
             accessibilityLabel="Send message"
-            style={{ ...styles.sendBtn, backgroundColor: theme.colors.primary }}
+            style={{ ...styles.sendBtn, backgroundColor: theme.colors.inverseSurface }}
           >
             <MaterialCommunityIcons
               name="send"
               size={20}
-              color={theme.colors.onPrimary}
+              color={theme.colors.inverseOnSurface}
             />
           </PressableScale>
         </Animated.View>

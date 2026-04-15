@@ -6,6 +6,7 @@ import { connectSocket, disconnectSocket } from '../../../foundation/network/soc
 import { database } from '../../../foundation/storage';
 import { kv, KvKeys } from '../../../foundation/storage/kv';
 import { syncEngine } from '../../chat/data/SyncEngine';
+import { privacyRepository } from '../../privacy/data/PrivacyRepository';
 
 export const authRepository = {
   async login(handle: string, password: string): Promise<AuthResponse> {
@@ -59,6 +60,9 @@ export const authRepository = {
     kv.setString(KvKeys.CurrentUserId, user.id);
     kv.setString(KvKeys.CurrentUser, JSON.stringify(user));
     kv.setString(KvKeys.LastLoggedInUserId, user.id);
+    if (user.privacy) {
+      privacyRepository.cacheSettings(user.privacy);
+    }
     const socket = await connectSocket();
     syncEngine.attach(socket, user.id);
   },
@@ -68,7 +72,16 @@ export const authRepository = {
     const raw = kv.getString(KvKeys.CurrentUser);
     if (!raw) return null;
     try {
-      return JSON.parse(raw) as User;
+      const parsed = JSON.parse(raw) as User;
+      // Backfill privacy for users cached before the privacy feature
+      if (!parsed.privacy) {
+        (parsed as any).privacy = {
+          readReceiptsEnabled: true,
+          onlineStatusVisible: true,
+          typingIndicatorsEnabled: true,
+        };
+      }
+      return parsed;
     } catch {
       return null;
     }

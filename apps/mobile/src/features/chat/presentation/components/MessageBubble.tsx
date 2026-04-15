@@ -190,11 +190,11 @@ function MessageBubbleInner({
         borderBottomRightRadius: theme.radii.xl,
       };
 
-  // Reply quote colors
-  const quoteAccentColor = fromSelf ? 'rgba(255,255,255,0.4)' : theme.colors.primary;
-  const quoteAuthorColor = fromSelf ? 'rgba(255,255,255,0.85)' : theme.colors.primary;
-  const quoteBodyColor = fromSelf ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted;
-  const quoteBgColor = fromSelf ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.04)';
+  // Reply quote colors (ochre bubbles use dark tones, bone bubbles use brand accent)
+  const quoteAccentColor = fromSelf ? 'rgba(88,69,0,0.5)' : theme.colors.primary;
+  const quoteAuthorColor = fromSelf ? 'rgba(88,69,0,0.85)' : theme.colors.primary;
+  const quoteBodyColor = fromSelf ? 'rgba(88,69,0,0.6)' : theme.colors.textMuted;
+  const quoteBgColor = fromSelf ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.04)';
 
   const quoteBlock = replyPreview ? (
     <Pressable onPress={onQuotePress} disabled={!onQuotePress}>
@@ -267,8 +267,8 @@ function MessageBubbleInner({
                 StyleSheet.absoluteFill,
                 {
                   backgroundColor: fromSelf
-                    ? 'rgba(255,255,255,0.25)'
-                    : 'rgba(100,181,246,0.25)',
+                    ? 'rgba(255,255,255,0.3)'
+                    : 'rgba(254,203,0,0.2)',
                 },
                 highlightOverlayStyle,
               ]}
@@ -281,7 +281,7 @@ function MessageBubbleInner({
                 variant="body"
                 style={{
                   color: fromSelf
-                    ? 'rgba(255,255,255,0.5)'
+                    ? 'rgba(88,69,0,0.5)'
                     : theme.colors.textMuted,
                   fontStyle: 'italic',
                 }}
@@ -316,7 +316,7 @@ function MessageBubbleInner({
                 variant="micro"
                 style={{
                   color: fromSelf
-                    ? 'rgba(255,255,255,0.7)'
+                    ? 'rgba(88,69,0,0.6)'
                     : theme.colors.textMuted,
                 }}
               >
@@ -367,17 +367,18 @@ function formatTime(ts: number) {
 }
 
 function statusIcon(s: Props['status']): React.JSX.Element {
+  // Dark tones on ochre bubble background
   switch (s) {
     case 'pending':
-      return <MaterialCommunityIcons name="clock-outline" size={14} color="rgba(255,255,255,0.5)" />;
+      return <MaterialCommunityIcons name="clock-outline" size={14} color="rgba(88,69,0,0.4)" />;
     case 'sent':
-      return <MaterialCommunityIcons name="check" size={14} color="rgba(255,255,255,0.7)" />;
+      return <MaterialCommunityIcons name="check" size={14} color="rgba(88,69,0,0.6)" />;
     case 'delivered':
-      return <MaterialCommunityIcons name="check-all" size={14} color="rgba(255,255,255,0.7)" />;
+      return <MaterialCommunityIcons name="check-all" size={14} color="rgba(88,69,0,0.6)" />;
     case 'read':
-      return <MaterialCommunityIcons name="check-all" size={14} color="#4FC3F7" />;
+      return <MaterialCommunityIcons name="check-all" size={14} color="#1a8cd8" />;
     case 'failed':
-      return <MaterialCommunityIcons name="alert-circle" size={14} color="#EF5350" />;
+      return <MaterialCommunityIcons name="alert-circle" size={14} color="#ba1a1a" />;
   }
 }
 

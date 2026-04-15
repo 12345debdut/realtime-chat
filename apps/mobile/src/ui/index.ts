@@ -1,4 +1,5 @@
 export { Avatar } from './Avatar';
+export { BottomSheet, BottomSheetAction, BottomSheetDivider, BottomSheetHeader } from './BottomSheet';
 export { Badge } from './Badge';
 export { Button } from './Button';
 export { Icon } from './Icon';

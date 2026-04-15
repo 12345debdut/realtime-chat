@@ -8,8 +8,10 @@ import { LoginScreen } from '../features/auth/presentation/screens/LoginScreen';
 import { useAuthStore } from '../features/auth/presentation/state/authStore';
 import { ChatRoomScreen } from '../features/chat/presentation/screens/ChatRoomScreen';
 import { NewChatScreen } from '../features/chat/presentation/screens/NewChatScreen';
+import { PrivacyScreen } from '../features/privacy/presentation/screens/PrivacyScreen';
 import { ProfileScreen } from '../features/profile/presentation/screens/ProfileScreen';
 import { useTheme } from '../ui/theme/ThemeProvider';
+import { fontFamily, typography } from '../ui/theme/tokens';
 
 import { TabNavigator } from './TabNavigator';
 import type { RootStackParamList } from './types';
@@ -43,10 +45,10 @@ export function RootNavigator() {
           text: theme.colors.text,
         },
         fonts: {
-          regular: { fontFamily: 'System', fontWeight: '400' as const },
-          medium: { fontFamily: 'System', fontWeight: '500' as const },
-          bold: { fontFamily: 'System', fontWeight: '700' as const },
-          heavy: { fontFamily: 'System', fontWeight: '900' as const },
+          regular: { fontFamily: fontFamily.body, fontWeight: '400' as const },
+          medium: { fontFamily: fontFamily.body, fontWeight: '500' as const },
+          bold: { fontFamily: fontFamily.display, fontWeight: '700' as const },
+          heavy: { fontFamily: fontFamily.display, fontWeight: '700' as const },
         },
       }}
     >
@@ -67,6 +69,11 @@ export function RootNavigator() {
             <Stack.Screen
               name="Profile"
               component={ProfileScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Privacy"
+              component={PrivacyScreen}
               options={{ animation: 'slide_from_right' }}
             />
           </>

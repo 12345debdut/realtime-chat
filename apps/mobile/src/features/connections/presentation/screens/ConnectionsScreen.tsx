@@ -6,20 +6,29 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import type { SentConnectionRequestWithUser } from '@rtc/contracts';
-
 import type { RootStackParamList } from '../../../../navigation/types';
-import { Avatar, PressableScale, Text, Toast, useTheme } from '../../../../ui';
+import { PressableScale, Text, Toast, useTheme } from '../../../../ui';
 import { useConnections } from '../hooks/useConnections';
+import { ConnectionRequestCard } from '../components/ConnectionRequestCard';
+import { SentRequestItem } from '../components/SentRequestItem';
+import { NetworkingTip } from '../components/NetworkingTip';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Tab = 'received' | 'sent';
+
+const SEGMENT_PADDING = 4;
+const SNAPPY_SPRING = { damping: 22, mass: 0.5, stiffness: 260 };
 
 export function ConnectionsScreen() {
   const theme = useTheme();
@@ -39,15 +48,56 @@ export function ConnectionsScreen() {
   } = useConnections();
 
   const [activeTab, setActiveTab] = useState<Tab>('received');
-  const [toast, setToast] = useState<{ visible: boolean; message: string; variant: 'success' | 'error' | 'info' }>({
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    variant: 'success' | 'error' | 'info';
+  }>({
     visible: false,
     message: '',
     variant: 'info',
   });
 
-  const showToast = useCallback((message: string, variant: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ visible: true, message, variant });
-  }, []);
+  // Pill animation state
+  const [containerWidth, setContainerWidth] = useState(0);
+  const pillTranslateX = useSharedValue(0);
+  const contentOpacity = useSharedValue(1);
+
+  const pillWidth =
+    containerWidth > 0 ? (containerWidth - SEGMENT_PADDING * 2) / 2 : 0;
+
+  const animatedPillStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: pillTranslateX.value }],
+  }));
+
+  const animatedContentStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+  }));
+
+  const handleTabSwitch = useCallback(
+    (tab: Tab) => {
+      // Fade out → switch tab → fade in
+      contentOpacity.value = withTiming(0, { duration: 100 }, (finished) => {
+        if (finished) {
+          contentOpacity.value = withTiming(1, { duration: 200 });
+        }
+      });
+      // Small delay so the fade-out is visible before content swaps
+      setTimeout(() => setActiveTab(tab), 100);
+      pillTranslateX.value = withSpring(
+        tab === 'received' ? 0 : pillWidth,
+        SNAPPY_SPRING,
+      );
+    },
+    [pillTranslateX, pillWidth, contentOpacity],
+  );
+
+  const showToast = useCallback(
+    (message: string, variant: 'success' | 'error' | 'info' = 'success') => {
+      setToast({ visible: true, message, variant });
+    },
+    [],
+  );
 
   const handleAccept = useCallback(
     async (requestId: string, senderName: string) => {
@@ -76,65 +126,82 @@ export function ConnectionsScreen() {
 
   const isReceivedTab = activeTab === 'received';
   const isLoading = isReceivedTab ? loading : sentLoading;
-  const isEmpty = isReceivedTab ? requests.length === 0 : sentRequests.length === 0;
+  const isEmpty = isReceivedTab
+    ? requests.length === 0
+    : sentRequests.length === 0;
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.surface }]} edges={['top']}>
-      {/* Header */}
+    <SafeAreaView
+      style={[styles.root, { backgroundColor: theme.colors.surface }]}
+      edges={['top']}
+    >
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
-        <View style={{ marginTop: theme.spacing.md }}>
-          <Text variant="headline">Connections</Text>
-          <Text variant="body" color="textMuted" style={{ marginTop: theme.spacing.xs }}>
-            Manage your connection requests.
-          </Text>
-        </View>
+        <Text variant="headline">Network</Text>
+        <Text
+          variant="body"
+          color="textMuted"
+          style={{ marginTop: 4 }}
+        >
+          Manage your incoming and outgoing circles.
+        </Text>
       </View>
 
-      {/* Segmented Control */}
+      {/* ── Segmented Control ───────────────────────────────────────────── */}
       <View
+        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
         style={[
           styles.segmentedControl,
           {
-            marginHorizontal: theme.spacing.xl,
-            marginBottom: theme.spacing.md,
-            backgroundColor: theme.colors.surfaceContainerHigh,
-            borderRadius: theme.radii.sm,
+            backgroundColor: theme.colors.surfaceContainerLow,
+            borderRadius: 28,
           },
         ]}
       >
+        {/* Animated sliding pill */}
+        {pillWidth > 0 && (
+          <Animated.View
+            style={[
+              styles.pill,
+              {
+                width: pillWidth,
+                backgroundColor: theme.colors.surfaceContainerLowest,
+              },
+              animatedPillStyle,
+            ]}
+          />
+        )}
+
         <PressableScale
           scaleTo={0.98}
-          onPress={() => setActiveTab('received')}
-          style={{
-            ...styles.segmentButton,
-            backgroundColor: isReceivedTab ? theme.colors.primary : 'transparent',
-            borderRadius: theme.radii.sm,
-          }}
+          onPress={() => handleTabSwitch('received')}
+          style={[styles.segmentButton, { borderRadius: 24 }]}
         >
           <Text
-            variant="caption"
+            variant="body"
             style={{
-              color: isReceivedTab ? theme.colors.onPrimary : theme.colors.textSecondary,
-              fontWeight: '600',
+              color: isReceivedTab
+                ? theme.colors.text
+                : theme.colors.textMuted,
+              fontWeight: isReceivedTab ? '600' : '400',
             }}
           >
             Received{requests.length > 0 ? ` (${requests.length})` : ''}
           </Text>
         </PressableScale>
+
         <PressableScale
           scaleTo={0.98}
-          onPress={() => setActiveTab('sent')}
-          style={{
-            ...styles.segmentButton,
-            backgroundColor: !isReceivedTab ? theme.colors.primary : 'transparent',
-            borderRadius: theme.radii.sm,
-          }}
+          onPress={() => handleTabSwitch('sent')}
+          style={[styles.segmentButton, { borderRadius: 24 }]}
         >
           <Text
-            variant="caption"
+            variant="body"
             style={{
-              color: !isReceivedTab ? theme.colors.onPrimary : theme.colors.textSecondary,
-              fontWeight: '600',
+              color: !isReceivedTab
+                ? theme.colors.text
+                : theme.colors.textMuted,
+              fontWeight: !isReceivedTab ? '600' : '400',
             }}
           >
             Sent{sentRequests.length > 0 ? ` (${sentRequests.length})` : ''}
@@ -142,171 +209,141 @@ export function ConnectionsScreen() {
         </PressableScale>
       </View>
 
+      {/* ── Content ─────────────────────────────────────────────────────── */}
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
-      ) : isEmpty ? (
-        <ScrollView
-          contentContainerStyle={styles.center}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
-        >
-          <Text variant="title" color="textMuted">
-            {isReceivedTab ? 'No pending requests' : 'No sent requests'}
-          </Text>
-          <Text
-            variant="body"
-            color="textMuted"
-            style={{ marginTop: theme.spacing.sm, textAlign: 'center', paddingHorizontal: 40 }}
-          >
-            {isReceivedTab
-              ? 'When someone sends you a message, their request will appear here.'
-              : 'Requests you send will appear here until they are accepted.'}
-          </Text>
-        </ScrollView>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 120 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
+          contentContainerStyle={isEmpty ? styles.emptyContent : { paddingBottom: 120 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={refresh} />
+          }
         >
-          {isReceivedTab
-            ? requests.map((request) => (
-                <Animated.View
-                  key={request.id}
-                  entering={FadeIn.duration(200)}
-                  exiting={FadeOut.duration(200)}
-                  style={[
-                    styles.requestCard,
-                    {
-                      backgroundColor: theme.colors.surfaceContainerLowest,
-                      borderRadius: theme.radii.md,
-                      marginHorizontal: theme.spacing.xl,
-                      marginBottom: theme.spacing.md,
-                      padding: theme.spacing.lg,
-                      opacity: acting === request.id ? 0.5 : 1,
-                    },
-                  ]}
+          <Animated.View style={animatedContentStyle}>
+            {isEmpty ? (
+              /* ── Empty state ──────────────────────────────────────── */
+              <View style={{ alignItems: 'center' }}>
+                <Text variant="title" color="textMuted">
+                  {isReceivedTab ? 'No pending requests' : 'No sent requests'}
+                </Text>
+                <Text
+                  variant="body"
+                  color="textMuted"
+                  style={{
+                    marginTop: 8,
+                    textAlign: 'center',
+                    paddingHorizontal: 40,
+                  }}
                 >
-                  <View style={styles.requestRow}>
-                    <Avatar
-                      uri={request.sender.avatarUrl ?? undefined}
-                      name={request.sender.displayName}
-                      size={48}
-                    />
-                    <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
-                      <Text variant="titleSm">{request.sender.displayName}</Text>
-                      <Text variant="caption" color="textMuted">
-                        @{request.sender.handle}
+                  {isReceivedTab
+                    ? 'When someone sends you a message, their request will appear here.'
+                    : 'Requests you send will appear here until they are accepted.'}
+                </Text>
+              </View>
+            ) : isReceivedTab ? (
+              /* ── Received tab ─────────────────────────────────────── */
+              <>
+                {/* Section header */}
+                <View style={styles.sectionHeader}>
+                  <Text
+                    variant="label"
+                    color="textMuted"
+                    style={styles.sectionLabel}
+                  >
+                    NEW INVITATIONS
+                  </Text>
+                  {requests.length > 0 && (
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor: theme.colors.primaryContainer,
+                        },
+                      ]}
+                    >
+                      <Text
+                        variant="micro"
+                        style={{
+                          color: theme.colors.bubbleSelfText,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {requests.length} Pending
                       </Text>
                     </View>
-                  </View>
-
-                  {request.message && (
-                    <Text variant="body" color="textSecondary" style={{ marginTop: theme.spacing.sm }}>
-                      &quot;{request.message}&quot;
-                    </Text>
                   )}
+                </View>
 
-                  <View style={[styles.requestActions, { marginTop: theme.spacing.md, gap: theme.spacing.sm }]}>
-                    <PressableScale
-                      scaleTo={0.96}
-                      onPress={() => handleAccept(request.id, request.sender.displayName)}
-                      disabled={acting !== null}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 10,
-                        borderRadius: theme.radii.sm,
-                        backgroundColor: theme.colors.primary,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text variant="caption" style={{ color: theme.colors.onPrimary, fontWeight: '600' }}>
-                        Accept
-                      </Text>
-                    </PressableScale>
-                    <PressableScale
-                      scaleTo={0.96}
-                      onPress={() => ignore(request.id)}
-                      disabled={acting !== null}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 10,
-                        borderRadius: theme.radii.sm,
-                        backgroundColor: theme.colors.surfaceContainerHigh,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text variant="caption" color="textSecondary" style={{ fontWeight: '600' }}>
-                        Ignore
-                      </Text>
-                    </PressableScale>
-                  </View>
-                </Animated.View>
-              ))
-            : sentRequests.map((request: SentConnectionRequestWithUser) => (
-                <Animated.View
-                  key={request.id}
-                  entering={FadeIn.duration(200)}
-                  exiting={FadeOut.duration(200)}
-                  style={[
-                    styles.requestCard,
-                    {
-                      backgroundColor: theme.colors.surfaceContainerLowest,
-                      borderRadius: theme.radii.md,
-                      marginHorizontal: theme.spacing.xl,
-                      marginBottom: theme.spacing.md,
-                      padding: theme.spacing.lg,
-                      opacity: revoking === request.id ? 0.5 : 1,
-                    },
-                  ]}
-                >
-                  <View style={styles.requestRow}>
-                    <Avatar
-                      uri={request.receiver.avatarUrl ?? undefined}
-                      name={request.receiver.displayName}
-                      size={48}
+                {/* Request cards */}
+                {requests.map((request) => (
+                  <View
+                    key={request.id}
+                    style={{ marginHorizontal: 24, marginBottom: 14 }}
+                  >
+                    <ConnectionRequestCard
+                      request={request}
+                      acting={acting === request.id}
+                      onAccept={() =>
+                        handleAccept(request.id, request.sender.displayName)
+                      }
+                      onIgnore={() => ignore(request.id)}
                     />
-                    <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
-                      <Text variant="titleSm">{request.receiver.displayName}</Text>
-                      <Text variant="caption" color="textMuted">
-                        @{request.receiver.handle}
-                      </Text>
+                  </View>
+                ))}
+              </>
+            ) : (
+              /* ── Sent tab ─────────────────────────────────────────── */
+              <>
+                {/* Section header */}
+                <View style={styles.sentSectionHeader}>
+                  <Text
+                    variant="label"
+                    color="textMuted"
+                    style={styles.sectionLabel}
+                  >
+                    SENT REQUESTS
+                  </Text>
+                </View>
+
+                {/* Sent request items */}
+                {sentRequests.map((request, index) => (
+                  <React.Fragment key={request.id}>
+                    <View style={{ marginHorizontal: 24 }}>
+                      <SentRequestItem
+                        request={request}
+                        revoking={revoking === request.id}
+                        onRevoke={() =>
+                          handleRevoke(request.id, request.receiver.displayName)
+                        }
+                      />
                     </View>
-                  </View>
+                    {index < sentRequests.length - 1 && (
+                      <View
+                        style={[
+                          styles.separator,
+                          {
+                            backgroundColor:
+                              theme.colors.outlineVariant + '30',
+                          },
+                        ]}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </>
+            )}
 
-                  {request.message && (
-                    <Text variant="body" color="textSecondary" style={{ marginTop: theme.spacing.sm }}>
-                      &quot;{request.message}&quot;
-                    </Text>
-                  )}
-
-                  <View style={[styles.requestActions, { marginTop: theme.spacing.md }]}>
-                    <PressableScale
-                      scaleTo={0.96}
-                      onPress={() => handleRevoke(request.id, request.receiver.displayName)}
-                      disabled={revoking !== null}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 10,
-                        borderRadius: theme.radii.sm,
-                        backgroundColor: theme.colors.danger,
-                        alignItems: 'center',
-                      }}
-                    >
-                      {revoking === request.id ? (
-                        <ActivityIndicator size="small" color={theme.colors.textInverse} />
-                      ) : (
-                        <Text variant="caption" style={{ color: theme.colors.textInverse, fontWeight: '600' }}>
-                          Revoke
-                        </Text>
-                      )}
-                    </PressableScale>
-                  </View>
-                </Animated.View>
-              ))}
+            {/* Networking tip */}
+            <View style={{ marginHorizontal: 24 }}>
+              <NetworkingTip />
+            </View>
+          </Animated.View>
         </ScrollView>
       )}
 
+      {/* ── Toast ───────────────────────────────────────────────────────── */}
       <Toast
         visible={toast.visible}
         message={toast.message}
@@ -318,32 +355,74 @@ export function ConnectionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: {
+    flex: 1,
+  },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 8,
   },
   segmentedControl: {
     flexDirection: 'row',
-    padding: 3,
+    marginTop: 20,
+    marginHorizontal: 24,
+    padding: 4,
+  },
+  pill: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   segmentButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100,
+    paddingBottom: 120,
   },
-  requestCard: {},
-  requestRow: {
+  emptyContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 120,
+  },
+  sectionHeader: {
+    marginTop: 24,
+    marginBottom: 16,
+    marginHorizontal: 24,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  requestActions: {
-    flexDirection: 'row',
+  sentSectionHeader: {
+    marginTop: 24,
+    marginBottom: 8,
+    marginHorizontal: 24,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+  },
+  badge: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 24,
   },
 });

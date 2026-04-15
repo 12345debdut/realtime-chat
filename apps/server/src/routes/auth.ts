@@ -32,6 +32,11 @@ export async function authRoutes(app: FastifyInstance) {
         handle: user.handle,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        privacy: {
+          readReceiptsEnabled: user.readReceiptsEnabled,
+          onlineStatusVisible: user.onlineStatusVisible,
+          typingIndicatorsEnabled: user.typingIndicatorsEnabled,
+        },
         createdAt: user.createdAt.getTime(),
       },
       tokens: {
@@ -62,6 +67,11 @@ export async function authRoutes(app: FastifyInstance) {
         handle: user.handle,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        privacy: {
+          readReceiptsEnabled: user.readReceiptsEnabled,
+          onlineStatusVisible: user.onlineStatusVisible,
+          typingIndicatorsEnabled: user.typingIndicatorsEnabled,
+        },
         createdAt: user.createdAt.getTime(),
       },
       tokens: { accessToken: access.token, refreshToken, expiresAt: access.expiresAt },

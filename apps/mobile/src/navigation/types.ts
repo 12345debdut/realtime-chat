@@ -12,4 +12,5 @@ export type RootStackParamList = {
   ChatRoom: { roomId: string; title: string; isRequest?: boolean };
   NewChat: undefined;
   Profile: { userId?: string };
+  Privacy: undefined;
 };

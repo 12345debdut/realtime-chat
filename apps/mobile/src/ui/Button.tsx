@@ -32,21 +32,25 @@ export function Button({
 }: Props) {
   const theme = useTheme();
 
+  // Primary: dark charcoal pill with light text (inverse-surface)
+  // Secondary: ochre pill with on-primary-container text
   const bg =
     variant === 'primary'
-      ? theme.colors.primary
+      ? theme.colors.inverseSurface
       : variant === 'secondary'
-        ? theme.colors.surfaceContainerHigh
+        ? theme.colors.primaryContainer
         : variant === 'danger'
           ? theme.colors.danger
           : theme.colors.transparent;
 
   const textColor =
-    variant === 'primary' || variant === 'danger'
-      ? theme.colors.onPrimary
+    variant === 'primary'
+      ? theme.colors.inverseOnSurface
       : variant === 'secondary'
-        ? theme.colors.text
-        : theme.colors.primary;
+        ? theme.colors.bubbleSelfText
+        : variant === 'danger'
+          ? theme.colors.onPrimary
+          : theme.colors.primary;
 
   return (
     <PressableScale

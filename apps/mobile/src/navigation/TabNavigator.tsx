@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { ChatListScreen } from '../features/chat/presentation/screens/ChatListScreen';
@@ -14,8 +15,13 @@ import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+const EDGE = 16;
+const BAR_HEIGHT = 64;
+const BAR_RADIUS = 22;
+
 export function TabNavigator() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { count: pendingCount } = usePendingCount();
 
   return (
@@ -23,19 +29,48 @@ export function TabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: theme.colors.surfaceContainerHighest,
+          position: 'absolute',
+          bottom: Math.max(insets.bottom, EDGE),
+          marginHorizontal: EDGE,
+          height: BAR_HEIGHT,
+          borderRadius: BAR_RADIUS,
+          backgroundColor: theme.mode === 'light'
+            ? 'rgba(255,255,255,0.92)'
+            : 'rgba(30,30,28,0.92)',
           borderTopWidth: 0,
-          elevation: 0,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.mode === 'light'
+            ? 'rgba(200,202,202,0.25)'
+            : 'rgba(72,72,70,0.3)',
+          paddingBottom: 0,
+          paddingTop: 0,
+          paddingHorizontal: 8,
+          // Whisper Shadow
+          shadowColor: '#2d2f2f',
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.06,
+          shadowRadius: 32,
+          elevation: 12,
         },
-        tabBarActiveTintColor: theme.colors.primary,
+        tabBarItemStyle: {
+          paddingVertical: 8,
+        },
+        tabBarActiveTintColor: theme.colors.inverseSurface,
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
           marginTop: 2,
+        },
+        tabBarBadgeStyle: {
+          backgroundColor: theme.colors.primaryContainer,
+          color: theme.colors.bubbleSelfText,
+          fontWeight: '700',
+          fontSize: 10,
+          minWidth: 18,
+          height: 18,
+          lineHeight: 18,
+          borderRadius: 9,
         },
         sceneStyle: { flex: 1 },
       }}

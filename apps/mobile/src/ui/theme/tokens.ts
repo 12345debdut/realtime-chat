@@ -1,12 +1,44 @@
 /**
- * Design tokens — Forest Chat design system.
+ * Design tokens — Lumina design system.
  *
- * Rooted in the "Fluid Dialogue" creative direction:
+ * Creative North Star: "The Digital Curator"
+ *  - High-End Editorial Minimalism
+ *  - Ochre / Bone / Charcoal palette
  *  - Tonal layering (no 1px borders — depth via surface shifts)
- *  - Forest Mint primary (#006953)
- *  - Inter typography with editorial hierarchy
- *  - 8 px base roundness
+ *  - Manrope (editorial display) + Inter (functional body)
+ *  - "No-Line Rule" — contrast is the new border
  */
+
+// ── Font families ───────────────────────────────────────────────────
+// Montserrat — clean, geometric, modern typeface across the app.
+// 4 weights bundled: Regular (400), Medium (500), SemiBold (600), Bold (700).
+// iOS uses the font family name; Android uses per-weight filenames.
+import { Platform } from 'react-native';
+
+const FONT = Platform.select({
+  ios: 'Montserrat',
+  default: 'Montserrat-Regular',
+});
+
+const FONT_MEDIUM = Platform.select({
+  ios: 'Montserrat',
+  default: 'Montserrat-Medium',
+});
+
+const FONT_SEMIBOLD = Platform.select({
+  ios: 'Montserrat',
+  default: 'Montserrat-SemiBold',
+});
+
+const FONT_BOLD = Platform.select({
+  ios: 'Montserrat',
+  default: 'Montserrat-Bold',
+});
+
+export const fontFamily = {
+  display: FONT_BOLD,
+  body: FONT,
+} as const;
 
 // ── Spacing ──────────────────────────────────────────────────────────
 export const spacing = {
@@ -35,61 +67,63 @@ export const radii = {
 export type Radius = keyof typeof radii;
 
 // ── Typography ───────────────────────────────────────────────────────
-// Editorial hierarchy: display → headline → title → body → label → micro
+// Dual-font hierarchy: Manrope (display/headline) + Inter (body/label).
+// "White space gravity" — larger, heavier headers pull the eye down.
 export const typography = {
-  display: { fontSize: 44, lineHeight: 52, fontWeight: '700' as const, letterSpacing: -0.5 },
-  headline: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const },
-  title: { fontSize: 18, lineHeight: 24, fontWeight: '600' as const },
-  titleSm: { fontSize: 16, lineHeight: 22, fontWeight: '600' as const },
-  body: { fontSize: 16, lineHeight: 22, fontWeight: '400' as const },
-  bodyBold: { fontSize: 16, lineHeight: 22, fontWeight: '600' as const },
-  caption: { fontSize: 13, lineHeight: 18, fontWeight: '400' as const },
-  label: { fontSize: 11, lineHeight: 14, fontWeight: '600' as const, letterSpacing: 0.8 },
-  micro: { fontSize: 11, lineHeight: 14, fontWeight: '500' as const },
+  display:  { fontSize: 44, lineHeight: 52, fontWeight: '700' as const, letterSpacing: -0.5, fontFamily: FONT_BOLD },
+  headline: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const, letterSpacing: -0.3, fontFamily: FONT_SEMIBOLD },
+  title:    { fontSize: 18, lineHeight: 24, fontWeight: '600' as const, fontFamily: FONT_SEMIBOLD },
+  titleSm:  { fontSize: 16, lineHeight: 22, fontWeight: '600' as const, fontFamily: FONT_SEMIBOLD },
+  body:     { fontSize: 16, lineHeight: 22, fontWeight: '400' as const, fontFamily: FONT },
+  bodyBold: { fontSize: 16, lineHeight: 22, fontWeight: '600' as const, fontFamily: FONT_SEMIBOLD },
+  caption:  { fontSize: 13, lineHeight: 18, fontWeight: '400' as const, fontFamily: FONT },
+  label:    { fontSize: 11, lineHeight: 14, fontWeight: '600' as const, letterSpacing: 0.8, fontFamily: FONT_SEMIBOLD },
+  micro:    { fontSize: 11, lineHeight: 14, fontWeight: '500' as const, fontFamily: FONT_MEDIUM },
 } as const;
 export type TypographyVariant = keyof typeof typography;
 
 // ── Colors ───────────────────────────────────────────────────────────
+// Ochre / Bone / Charcoal palette.
 // Surface hierarchy: lowest → low → default → high → highest
-// Follows "No-Line Rule" — boundaries defined by background shifts only.
+// "No-Line Rule" — boundaries defined by background shifts only.
 
 const lightPalette = {
-  // Surfaces (layered paper metaphor)
-  bg: '#f9f9ff',
-  surface: '#f9f9ff',
+  // Surfaces (layered stationery metaphor — bone/cream tones)
+  bg: '#f6f6f6',
+  surface: '#f6f6f6',
   surfaceContainerLowest: '#ffffff',
-  surfaceContainerLow: '#f1f3fe',
-  surfaceContainer: '#ecedf9',
-  surfaceContainerHigh: '#e6e8f3',
-  surfaceContainerHighest: '#e0e2ed',
-  surfaceDim: '#d8d9e5',
+  surfaceContainerLow: '#f0f1f1',
+  surfaceContainer: '#e8e8e6',
+  surfaceContainerHigh: '#dbdddd',
+  surfaceContainerHighest: '#d0d2d2',
+  surfaceDim: '#d6d6d4',
 
-  // Brand
-  primary: '#006953',
-  primaryContainer: '#008469',
-  primarySoft: '#e0f5ef',
+  // Brand (Ochre)
+  primary: '#705900',
+  primaryContainer: '#fecb00',
+  primarySoft: '#fff4cc',
   onPrimary: '#ffffff',
-  inversePrimary: '#5cdcb7',
+  inversePrimary: '#fecb00',
 
-  // Secondary
-  secondary: '#536166',
-  secondaryContainer: '#d6e5eb',
+  // Secondary (Warm grey)
+  secondary: '#5a5c5c',
+  secondaryContainer: '#e0e2e2',
   onSecondary: '#ffffff',
 
-  // Tertiary (accent / warning)
-  tertiary: '#9e3d00',
-  tertiaryContainer: '#c64f00',
+  // Tertiary (Warm brown accent)
+  tertiary: '#8b4513',
+  tertiaryContainer: '#ffdcc0',
   onTertiary: '#ffffff',
 
-  // Text
-  text: '#181c23',
-  textSecondary: '#414755',
-  textMuted: '#717786',
+  // Text (Charcoal hierarchy — headlines dark, body lighter)
+  text: '#2d2f2f',
+  textSecondary: '#5a5c5c',
+  textMuted: '#7a7c7c',
   textInverse: '#ffffff',
 
-  // Outline (ghost borders — use at <=15% opacity)
-  outline: '#717786',
-  outlineVariant: '#c1c6d7',
+  // Outline ("Ghost Border" — use at ≤15% opacity)
+  outline: '#7a7c7c',
+  outlineVariant: '#c8caca',
 
   // Feedback
   success: '#22C55E',
@@ -97,70 +131,81 @@ const lightPalette = {
   dangerContainer: '#ffdad6',
   warning: '#F59E0B',
 
-  // Chat bubbles
-  bubbleSelf: '#006953',
-  bubbleOther: '#e6e8f3',
-  bubbleSelfText: '#ffffff',
-  bubbleOtherText: '#181c23',
+  // Chat bubbles (signature ochre / bone)
+  bubbleSelf: '#fecb00',
+  bubbleOther: '#ffffff',
+  bubbleSelfText: '#584500',
+  bubbleOtherText: '#2d2f2f',
 
-  // Inverse surface (for toasts / snackbars)
-  inverseSurface: '#2d3039',
-  inverseOnSurface: '#eef0fc',
+  // Inverse surface (charcoal — for toasts, primary buttons)
+  inverseSurface: '#0c0f0f',
+  inverseOnSurface: '#f0f1f1',
 
-  // Surface tint (interaction ripple)
-  surfaceTint: '#006b55',
+  // Surface tint (ochre interaction ripple)
+  surfaceTint: '#705900',
 
   // Transparent
   transparent: 'transparent',
 };
 
 const darkPalette: typeof lightPalette = {
-  bg: '#0f1218',
-  surface: '#0f1218',
-  surfaceContainerLowest: '#0a0d12',
-  surfaceContainerLow: '#181c23',
-  surfaceContainer: '#1c2029',
-  surfaceContainerHigh: '#262b34',
-  surfaceContainerHighest: '#31363f',
-  surfaceDim: '#0f1218',
+  // Surfaces (deep charcoal layers)
+  bg: '#121210',
+  surface: '#121210',
+  surfaceContainerLowest: '#0c0c0a',
+  surfaceContainerLow: '#1c1c1a',
+  surfaceContainer: '#242422',
+  surfaceContainerHigh: '#2e2e2c',
+  surfaceContainerHighest: '#393937',
+  surfaceDim: '#121210',
 
-  primary: '#5cdcb7',
-  primaryContainer: '#008469',
-  primarySoft: '#0a2e24',
-  onPrimary: '#00382b',
-  inversePrimary: '#006953',
+  // Brand (Bright ochre on dark)
+  primary: '#e8b800',
+  primaryContainer: '#564400',
+  primarySoft: '#2a2200',
+  onPrimary: '#3b2e00',
+  inversePrimary: '#705900',
 
-  secondary: '#bac9cf',
-  secondaryContainer: '#3b494e',
-  onSecondary: '#253136',
+  // Secondary
+  secondary: '#c8caca',
+  secondaryContainer: '#424444',
+  onSecondary: '#2d2f2f',
 
-  tertiary: '#ffb595',
-  tertiaryContainer: '#7c2e00',
-  onTertiary: '#561f00',
+  // Tertiary
+  tertiary: '#ffb77c',
+  tertiaryContainer: '#6b3410',
+  onTertiary: '#4a2500',
 
-  text: '#e0e2ed',
-  textSecondary: '#c1c6d7',
-  textMuted: '#8b90a0',
-  textInverse: '#181c23',
+  // Text (Light bone tones)
+  text: '#e8e6e0',
+  textSecondary: '#c0beb8',
+  textMuted: '#8a8880',
+  textInverse: '#2d2f2f',
 
-  outline: '#8b90a0',
-  outlineVariant: '#414754',
+  // Outline
+  outline: '#8a8880',
+  outlineVariant: '#484846',
 
+  // Feedback
   success: '#4ADE80',
   danger: '#ffb4ab',
   dangerContainer: '#93000a',
   warning: '#FBBF24',
 
-  bubbleSelf: '#008469',
-  bubbleOther: '#262b34',
-  bubbleSelfText: '#ffffff',
-  bubbleOtherText: '#e0e2ed',
+  // Chat bubbles
+  bubbleSelf: '#e8b800',
+  bubbleOther: '#2e2e2c',
+  bubbleSelfText: '#2d2200',
+  bubbleOtherText: '#e8e6e0',
 
-  inverseSurface: '#e0e2ed',
-  inverseOnSurface: '#2d3039',
+  // Inverse
+  inverseSurface: '#e8e6e0',
+  inverseOnSurface: '#2d2f2f',
 
-  surfaceTint: '#5cdcb7',
+  // Surface tint
+  surfaceTint: '#e8b800',
 
+  // Transparent
   transparent: 'transparent',
 };
 
