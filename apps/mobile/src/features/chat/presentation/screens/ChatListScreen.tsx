@@ -436,7 +436,7 @@ export function ChatListScreen() {
 
         {/* ── Content ── */}
         {hydrated && rooms.length === 0 ? (
-          <EmptyChats onStartChat={handleNewChat} />
+          <EmptyChats onStartChat={handleNewChat} refreshing={refreshing} onRefresh={refresh} />
         ) : (
           <View style={styles.listContainer}>
             <FlashList

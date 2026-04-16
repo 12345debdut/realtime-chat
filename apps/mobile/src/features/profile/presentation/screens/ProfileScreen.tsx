@@ -36,7 +36,11 @@ export function ProfileScreen() {
           <Text variant="body" color="textMuted" style={{ marginTop: theme.spacing.xs }}>
             {user?.handle ? `@${user.handle}` : ''}
           </Text>
-          {/* Bio will be supported in v2 */}
+          {user?.bio && (
+            <Text variant="body" color="textMuted" style={{ marginTop: 8, textAlign: 'center', paddingHorizontal: 32 }}>
+              {user.bio}
+            </Text>
+          )}
         </View>
 
         {/* Stats row removed — real counts will be wired in v2 */}
@@ -62,8 +66,8 @@ export function ProfileScreen() {
           </View>
           <View style={{ marginTop: theme.spacing.md, gap: theme.spacing.md }}>
             <InfoRow label="Handle" value={user?.handle ? `@${user.handle}` : 'Not set'} theme={theme} />
-            <InfoRow label="Phone" value="Not set" theme={theme} />
-            <InfoRow label="Location" value="Not set" theme={theme} />
+            <InfoRow label="Phone" value={user?.phone ?? 'Not set'} theme={theme} />
+            <InfoRow label="Location" value={user?.location ?? 'Not set'} theme={theme} />
           </View>
         </View>
 

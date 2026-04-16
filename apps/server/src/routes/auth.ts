@@ -32,6 +32,11 @@ export async function authRoutes(app: FastifyInstance) {
         handle: user.handle,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        bio: user.bio,
+        email: user.email,
+        phone: user.phone,
+        dateOfBirth: (user.dateOfBirth ? user.dateOfBirth.toISOString().split('T')[0] : null) as string | null,
+        location: user.location,
         privacy: {
           readReceiptsEnabled: user.readReceiptsEnabled,
           onlineStatusVisible: user.onlineStatusVisible,
@@ -67,6 +72,11 @@ export async function authRoutes(app: FastifyInstance) {
         handle: user.handle,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        bio: user.bio,
+        email: user.email,
+        phone: user.phone,
+        dateOfBirth: (user.dateOfBirth ? user.dateOfBirth.toISOString().split('T')[0] : null) as string | null,
+        location: user.location,
         privacy: {
           readReceiptsEnabled: user.readReceiptsEnabled,
           onlineStatusVisible: user.onlineStatusVisible,

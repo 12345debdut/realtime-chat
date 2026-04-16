@@ -86,7 +86,7 @@ export function SettingsScreen() {
         <ListItem
           icon="account-outline"
           title="Personal Information"
-          onPress={comingSoon}
+          onPress={() => navigation.navigate('PersonalInfo')}
         />
         <ListItem
           icon="shield-lock-outline"
