@@ -13,4 +13,5 @@ export type RootStackParamList = {
   NewChat: undefined;
   Profile: { userId?: string };
   Privacy: undefined;
+  PersonalInfo: undefined;
 };

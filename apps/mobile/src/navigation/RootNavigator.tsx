@@ -8,6 +8,7 @@ import { LoginScreen } from '../features/auth/presentation/screens/LoginScreen';
 import { useAuthStore } from '../features/auth/presentation/state/authStore';
 import { ChatRoomScreen } from '../features/chat/presentation/screens/ChatRoomScreen';
 import { NewChatScreen } from '../features/chat/presentation/screens/NewChatScreen';
+import { PersonalInfoScreen } from '../features/settings/presentation/screens/PersonalInfoScreen';
 import { PrivacyScreen } from '../features/privacy/presentation/screens/PrivacyScreen';
 import { ProfileScreen } from '../features/profile/presentation/screens/ProfileScreen';
 import { useTheme } from '../ui/theme/ThemeProvider';
@@ -74,6 +75,11 @@ export function RootNavigator() {
             <Stack.Screen
               name="Privacy"
               component={PrivacyScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="PersonalInfo"
+              component={PersonalInfoScreen}
               options={{ animation: 'slide_from_right' }}
             />
           </>

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { IdSchema, TimestampSchema } from './primitives';
-import { UserSchema } from './auth';
+import { PublicUserSchema } from './auth';
 import { RoomSchema } from './rooms';
 
 export const ConnectionStatusSchema = z.enum(['pending', 'accepted', 'ignored']);
@@ -18,7 +18,7 @@ export const ConnectionRequestSchema = z.object({
 export type ConnectionRequest = z.infer<typeof ConnectionRequestSchema>;
 
 export const ConnectionRequestWithUserSchema = ConnectionRequestSchema.extend({
-  sender: UserSchema,
+  sender: PublicUserSchema,
 });
 export type ConnectionRequestWithUser = z.infer<typeof ConnectionRequestWithUserSchema>;
 
@@ -64,7 +64,7 @@ export type IgnoreConnectionResponse = z.infer<typeof IgnoreConnectionResponseSc
 /** GET /connections → list of accepted peers */
 export const ConnectionPeerSchema = z.object({
   id: IdSchema,
-  peer: UserSchema,
+  peer: PublicUserSchema,
   createdAt: TimestampSchema,
 });
 export type ConnectionPeer = z.infer<typeof ConnectionPeerSchema>;
@@ -73,7 +73,7 @@ export type ConnectionPeer = z.infer<typeof ConnectionPeerSchema>;
 
 /** GET /connections/sent → list of pending sent requests with receiver user data */
 export const SentConnectionRequestWithUserSchema = ConnectionRequestSchema.extend({
-  receiver: UserSchema,
+  receiver: PublicUserSchema,
 });
 export type SentConnectionRequestWithUser = z.infer<typeof SentConnectionRequestWithUserSchema>;
 

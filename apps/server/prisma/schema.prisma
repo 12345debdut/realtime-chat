@@ -22,6 +22,13 @@ model User {
   onlineStatusVisible      Boolean @default(true)
   typingIndicatorsEnabled  Boolean @default(true)
 
+  // Personal information (all optional)
+  bio          String?
+  email        String?
+  phone        String?
+  dateOfBirth  DateTime?
+  location     String?
+
   createdAt    DateTime     @default(now())
 
   memberships  Membership[]

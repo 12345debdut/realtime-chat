@@ -7,7 +7,7 @@ import {
   type ConnectionRequestWithUser,
   type ConnectionRequest,
   type Room,
-  type User,
+  type PublicUser,
   type SendConnectionAlreadyConnected,
   type SendConnectionCreated,
   type AcceptConnectionResponse,
@@ -402,7 +402,8 @@ function shapeRequestWithReceiver(r: PrismaRequestWithReceiver): SentConnectionR
   };
 }
 
-function shapeUser(u: PrismaUserSelect): User {
+/** Public-facing user shape — intentionally omits personal info (bio, email, phone, etc.) */
+function shapeUser(u: PrismaUserSelect): PublicUser {
   return {
     id: u.id,
     handle: u.handle,

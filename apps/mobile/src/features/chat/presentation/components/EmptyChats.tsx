@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,9 +12,11 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Props {
   onStartChat: () => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
-export function EmptyChats({ onStartChat }: Props) {
+export function EmptyChats({ onStartChat, refreshing, onRefresh }: Props) {
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
 
@@ -23,6 +25,11 @@ export function EmptyChats({ onStartChat }: Props) {
       style={styles.scroll}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} />
+        ) : undefined
+      }
     >
       {/* Illustration placeholder */}
       <View

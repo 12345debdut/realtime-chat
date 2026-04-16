@@ -81,6 +81,12 @@ export const authRepository = {
           typingIndicatorsEnabled: true,
         };
       }
+      // Backfill personal-info fields for users cached before the feature
+      if (parsed.bio === undefined) (parsed as any).bio = null;
+      if (parsed.email === undefined) (parsed as any).email = null;
+      if (parsed.phone === undefined) (parsed as any).phone = null;
+      if (parsed.dateOfBirth === undefined) (parsed as any).dateOfBirth = null;
+      if (parsed.location === undefined) (parsed as any).location = null;
       return parsed;
     } catch {
       return null;
