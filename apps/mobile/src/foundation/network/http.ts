@@ -13,7 +13,7 @@ import { logger } from '../../lib/logger';
 import { API_URL } from './config';
 import { secureStore } from './secureStore';
 
-export const http = axios.create({ baseURL: API_URL, timeout: 15_000 });
+export const http = axios.create({ baseURL: API_URL, timeout: 30_000 });
 
 let refreshPromise: Promise<AuthTokens | null> | null = null;
 
@@ -23,7 +23,7 @@ async function refresh(): Promise<AuthTokens | null> {
   try {
     const res = await axios.post<AuthTokens>(`${API_URL}/auth/refresh`, {
       refreshToken: current.refreshToken,
-    });
+    }, { timeout: 15_000 });
     await secureStore.save(res.data);
     return res.data;
   } catch (err) {

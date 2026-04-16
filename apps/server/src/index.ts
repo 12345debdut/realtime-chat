@@ -7,6 +7,7 @@ import sensible from '@fastify/sensible';
 import Fastify from 'fastify';
 
 import { env } from './lib/env';
+import { prisma } from './lib/prisma';
 import { authRoutes } from './routes/auth';
 import { connectionRoutes } from './routes/connections';
 import { meRoutes } from './routes/me';
@@ -36,6 +37,14 @@ async function main() {
   await app.register(connectionRoutes);
 
   app.get('/health', async () => ({ status: 'ok' }));
+
+  // Warm up Neon serverless DB connection so first user request isn't slow
+  await prisma.$queryRaw`SELECT 1`.catch(() => {});
+
+  // Keep Neon connection warm — ping every 4 minutes to prevent cold starts
+  setInterval(() => {
+    prisma.$queryRaw`SELECT 1`.catch(() => {});
+  }, 4 * 60 * 1000);
 
   await app.listen({ host: '0.0.0.0', port: env.PORT });
 
