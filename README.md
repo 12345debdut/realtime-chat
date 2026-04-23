@@ -184,6 +184,27 @@ Until the mobile builds are published, the fastest path to see it running is the
 
 ## 2. High-level architecture
 
+Two Excalidraw diagrams live at [`docs/hld/`](./docs/hld/) — one per half of the system. The sources are editable `.excalidraw` files; the PNGs below are exported snapshots.
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <!-- Uncomment once exported from docs/hld/server.excalidraw: -->
+      <!-- <img src="docs/hld/server.png" width="560" alt="Server HLD" /> -->
+      <br/><sub><b>Server HLD</b> · <a href="./docs/hld/server.excalidraw">source</a> · Fastify middleware stack, Zod validation, Prisma, Socket.IO + Redis adapter, Postgres (Neon).</sub>
+    </td>
+    <td align="center" width="50%">
+      <!-- Uncomment once exported from docs/hld/client.excalidraw: -->
+      <!-- <img src="docs/hld/client.png" width="560" alt="Client HLD" /> -->
+      <br/><sub><b>Client HLD</b> · <a href="./docs/hld/client.excalidraw">source</a> · UI → state (Zustand + TanStack Query) → feature repositories → WatermelonDB / MMKV / Keychain → SyncEngine → axios + socket.io-client.</sub>
+    </td>
+  </tr>
+</table>
+
+<sub>Editing: open either file at <a href="https://excalidraw.com">excalidraw.com</a> or in the VS Code Excalidraw extension. Export to PNG from inside the editor and drop next to the source file — see <a href="./docs/hld/README.md"><code>docs/hld/README.md</code></a> for the capture workflow.</sub>
+
+### Text form (for screen readers and grep)
+
 ```
  ┌──────────────────────────────────────┐       ┌──────────────────────────────────────────┐
  │           React Native App           │       │              Fastify Server              │
