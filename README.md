@@ -13,18 +13,134 @@ An offline-first, realtime 1:1 and group messaging app built end-to-end to demon
 
 This is not a toy. Every decision in this repo is deliberate and traceable to a real product concern: latency, reliability on bad networks, data consistency, security, developer ergonomics, and deploy confidence.
 
+## Screens
+
+A product tour, grouped by user journey. Each caption ties the screen to the engineering work behind it — the UI is the tip of the iceberg.
+
+### Sign in / sign up
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/sign_in.png" width="260" alt="Sign in screen" />
+      <br/><sub><b>Sign in</b> — argon2id on the server, rate-limited at 10/min/IP via <code>@fastify/rate-limit</code>. Access token (15 min) + rotating refresh token (30 days, sha256-hashed in the DB).</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/create_account.png" width="260" alt="Create account screen" />
+      <br/><sub><b>Create account</b> — handle uniqueness, server-side age ≥ 13 for the optional date of birth, E.164-validated phone.</sub>
+    </td>
+  </tr>
+</table>
+
+### First run — from empty to connected
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/empty_screen.png" width="220" alt="Empty chat list" />
+      <br/><sub><b>Empty chat list</b> — illustrated empty state with pull-to-refresh, not a blank white wall.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/empty_connections.png" width="220" alt="Empty connections" />
+      <br/><sub><b>No connections yet</b> — contextual CTA to find people, not a dead end.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/request_user_list.png" width="220" alt="User search" />
+      <br/><sub><b>User search</b> — excludes existing connections + DM peers server-side (<code>GET /users?search=</code>).</sub>
+    </td>
+  </tr>
+</table>
+
+### Connection lifecycle
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/send_connection_request.png" width="220" alt="Send connection request" />
+      <br/><sub><b>Send request</b> — optional first message, 280-char limit, Zod-validated on both sides.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/connection_request_pending.png" width="220" alt="Pending request received" />
+      <br/><sub><b>Pending (received)</b> — accept creates the DM room and emits a socket event to both parties inside a single <code>$transaction</code>.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/sent_connection.png" width="220" alt="Sent connections tab" />
+      <br/><sub><b>Sent tab</b> — revoke before the recipient accepts; status reflected in realtime.</sub>
+    </td>
+  </tr>
+</table>
+
+### Messaging
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/chat_list_screen.png" width="220" alt="Chat list" />
+      <br/><sub><b>Chat list</b> — FlashList, recycled cells, last-message preview from WatermelonDB observables.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/chat_screen_bubble_messages.png" width="220" alt="Chat room" />
+      <br/><sub><b>Chat room</b> — optimistic send with client-generated <code>clientId</code>, reconciled on server ack. Reanimated 4 bubble entries, sync keyboard.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/long_press_chat_list.png" width="220" alt="Long-press context menu" />
+      <br/><sub><b>Long-press menu</b> — Gesture Handler 2 long-press; pin / tag / delete actions. Haptic feedback on trigger.</sub>
+    </td>
+  </tr>
+</table>
+
+### Organization with tags
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/new_tag_flow.png" width="260" alt="Create a tag" />
+      <br/><sub><b>Create a tag</b> — color-coded, per-user, offline-first (local DB write → server sync when online).</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/chatlist_after_adding_tag.png" width="260" alt="Tagged chat list" />
+      <br/><sub><b>Tagged chat list</b> — filter chips, colored pills. The filter runs entirely off the local SQLite index — zero network.</sub>
+    </td>
+  </tr>
+</table>
+
+### Your account
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/settings.png" width="260" alt="Settings hub" />
+      <br/><sub><b>Settings</b> — navigation hub. Logout is local-only; "sign out from all devices" revokes every refresh token server-side.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/profile_screen.png" width="260" alt="Profile screen" />
+      <br/><sub><b>Profile</b> — what other people see: handle, display name, avatar. Read-only; <code>PublicUserSchema</code> in <code>@rtc/contracts</code> guarantees personal info never leaks through non-<code>/me</code> endpoints (see <a href="./docs/adr/0003-public-user-schema.md">ADR 0003</a>).</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/profile_details.png" width="260" alt="Personal information editor" />
+      <br/><sub><b>Personal information</b> — bio, email, phone, DOB, location, all optional. Per-field bottom-sheet editor with inline validation (E.164 phone, age ≥ 13, 280-char bio) and optimistic UI that rolls back on server rejection.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/privacy_settings.png" width="260" alt="Privacy and security settings" />
+      <br/><sub><b>Privacy &amp; Security</b> — read receipts, online status, typing indicators. Bilateral: disabling stops both directions. Server enforces via a 5-minute Redis-cached lookup on the socket hot path (<a href="./docs/adr/0002-bilateral-privacy-model.md">ADR 0002</a>).</sub>
+    </td>
+  </tr>
+</table>
+
 ## Try it
 
 <!-- Replace these placeholders once you have real URLs. Keep the section here -->
 <!-- rather than deleting it — even a "none yet, run locally via §10" entry is -->
 <!-- more useful to a reviewer than silence. -->
 
-| Target                     | Status              | Link                                                                                  |
-| -------------------------- | ------------------- | ------------------------------------------------------------------------------------- |
-| **Server API**             | TBD                 | `https://rtc-chat.fly.dev` (set `RTC_ENV=prod` in Metro to point the mobile app here) |
-| **iOS TestFlight**         | not yet published   | —                                                                                     |
-| **Android internal track** | not yet published   | —                                                                                     |
-| **Web demo**               | out of scope for v1 | —                                                                                     |
+| Target                     | Status              | Link                                                                                                                                                                                               |
+| -------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Server API**             | 🟢 live             | [`https://rtc-chat.fly.dev/health`](https://rtc-chat.fly.dev/health) · Fly.io · Mumbai region. Point the mobile app here by flipping `USE_PROD` in `apps/mobile/src/foundation/network/config.ts`. |
+| **iOS TestFlight**         | not yet published   | —                                                                                                                                                                                                  |
+| **Android internal track** | not yet published   | —                                                                                                                                                                                                  |
+| **Web demo**               | out of scope for v1 | —                                                                                                                                                                                                  |
 
 Until the mobile builds are published, the fastest path to see it running is the [local development](#10-local-development) section — iOS simulator + `yarn workspace @rtc/server dev` gets you there in about 5 minutes.
 
