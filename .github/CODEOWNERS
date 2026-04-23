@@ -1,0 +1,36 @@
+# CODEOWNERS — who gets auto-requested on PRs.
+#
+# Order matters: later patterns win. Default owner first, then per-area
+# overrides. Works with branch-protection's "Require review from Code
+# Owners" setting — see .github/BRANCH_PROTECTION.md.
+#
+# While this is a solo repo, the file is still useful: it documents
+# intended ownership and activates cleanly the moment a collaborator
+# joins. Remove or edit when the team changes.
+
+# Default — everything not matched below.
+*                       @debdutsaha
+
+# Wire-format contract — the single highest-leverage file in the repo.
+# Any schema change touches both apps and should get the most careful
+# review. Kept as its own code-owner entry to make that visible.
+/packages/contracts/    @debdutsaha
+
+# Server — auth, privacy enforcement, rate limits, Prisma migrations.
+/apps/server/           @debdutsaha
+/apps/server/prisma/    @debdutsaha
+
+# Mobile — the larger codebase and the part with the most churn.
+/apps/mobile/           @debdutsaha
+
+# Infra / CI / deploy — changes here affect every PR that ships.
+/.github/               @debdutsaha
+/fly.toml               @debdutsaha
+/apps/server/Dockerfile @debdutsaha
+
+# Docs & ADRs — architectural documents. A future reviewer should be
+# nudged to check that their code change doesn't contradict an ADR.
+/docs/                  @debdutsaha
+/README.md              @debdutsaha
+/SECURITY.md            @debdutsaha
+/PRIVACY.md             @debdutsaha

@@ -2,7 +2,7 @@
 
 GitHub branch-protection rules can't be committed to the repo; they live in repo settings. Apply this checklist **after** pushing the repo for the first time.
 
-Go to **Settings → Branches → Add rule** (or use the *Rulesets* UI, which is the successor — both work).
+Go to **Settings → Branches → Add rule** (or use the _Rulesets_ UI, which is the successor — both work).
 
 ## Rule: `main`
 
@@ -23,7 +23,7 @@ Go to **Settings → Branches → Add rule** (or use the *Rulesets* UI, which is
 ### Other guards
 
 - [x] **Require conversation resolution before merging**
-- [x] **Require signed commits** *(optional but recommended — only turn on once you're comfortable signing)*
+- [x] **Require signed commits** _(optional but recommended — only turn on once you're comfortable signing)_
 - [x] **Require linear history** — disallow merge commits; PRs rebase or squash
 - [x] **Do not allow bypassing the above settings** — applies to admins too
 - [x] **Restrict who can push to matching branches** → only maintainers
@@ -41,13 +41,18 @@ The `deploy-server.yml` workflow attaches to this environment. Configure it at *
 
 If you'd rather deploy without manual approval later, just remove the required reviewer. The workflow itself doesn't change.
 
-## Dependabot
+## Dependency updates — Renovate
 
-Enable at **Settings → Code security → Dependabot**:
+This repo uses **Renovate** (config at `/renovate.json`), not Dependabot's version updates. Dependabot security alerts are still useful as a second signal and cost nothing.
 
-- [x] **Dependabot alerts**
-- [x] **Dependabot security updates**
-- [x] **Dependabot version updates** — driven by `.github/dependabot.yml` already in the repo
+1. Install the **Renovate GitHub App** on this repository: https://github.com/apps/renovate
+2. First run opens a "Configure Renovate" onboarding PR — merge it to activate.
+3. Renovate then creates PRs against `main` on the schedule defined in `renovate.json` (weekly, Monday before 4am Asia/Kolkata; github-actions + docker bump monthly).
+
+Also enable at **Settings → Code security**:
+
+- [x] **Dependabot alerts** (keep on — separate from version updates, free vulnerability signal)
+- [x] **Dependabot security updates** (keep on — raises automatic PRs for CVEs on top of Renovate's regular cadence)
 
 ## Secret scanning & push protection
 

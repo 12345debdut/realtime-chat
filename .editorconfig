@@ -1,0 +1,35 @@
+# EditorConfig — shared editor defaults so contributors don't produce diffs
+# that only differ in whitespace. See https://editorconfig.org.
+# Most editors understand this natively or via a plugin; VS Code ships with
+# built-in support.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown trailing whitespace is sometimes meaningful (two-space line break).
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefiles require tabs.
+[Makefile]
+indent_style = tab
+
+# Windows batch scripts prefer CRLF.
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# Gradle files — some Android tooling assumes tabs; match upstream RN template.
+[*.gradle]
+indent_size = 4
+
+# Ruby / Gemfile — standard Ruby 2-space is already the default, listed for
+# clarity.
+[{Gemfile,*.rb}]
+indent_size = 2

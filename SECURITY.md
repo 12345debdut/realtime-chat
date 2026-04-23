@@ -4,7 +4,11 @@
 
 Please do **not** open a public GitHub issue for a security concern.
 
-Email the repo owner directly. We'll acknowledge within **72 hours** and aim to share a preliminary assessment within **7 days**. If the finding is credible we'll coordinate disclosure after a fix is available.
+**Preferred channel:** GitHub's **Private vulnerability reporting** on this repository — click [**Security → Report a vulnerability**](https://github.com/debdutsaha/realtime-chat/security/advisories/new) (requires being signed in to GitHub). This keeps the report sealed until a fix is published and lets us credit you in the eventual advisory.
+
+**If you can't use PVR for any reason:** open a minimal public issue saying only "I have a security report, please open a private channel" — do **not** include details. A maintainer will respond within 72 hours with a private contact.
+
+We'll acknowledge within **72 hours** and aim to share a preliminary assessment within **7 days**. If the finding is credible we'll coordinate disclosure after a fix is available.
 
 When reporting, please include:
 
@@ -15,12 +19,12 @@ When reporting, please include:
 
 ## Scope
 
-| In scope | Out of scope |
-|---|---|
-| Server (`apps/server/`) on the production deploy | Third-party dependencies (report to upstream; we'll pick up the fix) |
-| Mobile app (`apps/mobile/`) published builds | Local dev misconfigurations (e.g., exposed localhost Postgres) |
-| Protocol design flaws (auth, socket, privacy model) | Phishing or social-engineering attacks on users |
-| Secrets in git history or deploy artifacts | Self-XSS / things that require compromising the user's own device |
+| In scope                                            | Out of scope                                                         |
+| --------------------------------------------------- | -------------------------------------------------------------------- |
+| Server (`apps/server/`) on the production deploy    | Third-party dependencies (report to upstream; we'll pick up the fix) |
+| Mobile app (`apps/mobile/`) published builds        | Local dev misconfigurations (e.g., exposed localhost Postgres)       |
+| Protocol design flaws (auth, socket, privacy model) | Phishing or social-engineering attacks on users                      |
+| Secrets in git history or deploy artifacts          | Self-XSS / things that require compromising the user's own device    |
 
 ## Current security posture
 

@@ -1,0 +1,45 @@
+# .gitattributes — normalize line endings + mark generated files.
+# Prevents Windows contributors from introducing CRLF that Mac/Linux
+# contributors will then flip back, producing noisy diffs.
+
+# Default — text files get LF in the repo regardless of checkout OS.
+* text=auto eol=lf
+
+# Binary — skip any text-conversion heuristics.
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.mov           binary
+*.mp4           binary
+*.webp          binary
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.otf           binary
+*.zip           binary
+*.p8            binary
+*.p12           binary
+*.keystore      binary
+*.mobileprovision binary
+
+# Lockfiles — treat as text, but don't show in `git diff` by default (they're
+# huge and rarely reviewed line-by-line). A reviewer who wants them can pass
+# `--text` or use a tool like `git-diff-lock`.
+yarn.lock       -diff
+package-lock.json -diff
+Podfile.lock    -diff
+
+# Generated or vendored — don't pollute GitHub's "languages" bar.
+.yarn/releases/** linguist-vendored
+.yarn/plugins/**  linguist-vendored
+packages/contracts/dist/** linguist-generated
+apps/server/dist/** linguist-generated
+
+# Windows batch scripts need CRLF.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# Shell scripts — enforce LF even on Windows (bash won't run CRLF scripts).
+*.sh            text eol=lf

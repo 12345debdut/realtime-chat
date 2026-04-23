@@ -9,5 +9,6 @@
     "resolveJsonModule": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "references": [{ "path": "../../packages/contracts" }]
 }

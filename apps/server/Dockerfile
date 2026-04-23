@@ -5,7 +5,7 @@
 # @rtc/tsconfig workspaces are visible. `fly.toml` at the repo root
 # already points here.
 
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl python3 make g++
 
@@ -45,4 +45,11 @@ ENV PORT=4000
 COPY --from=build /app /app
 WORKDIR /app/apps/server
 EXPOSE 4000
-CMD ["sh", "-c", "yarn prisma db push --skip-generate && node dist/index.js"]
+# Apply committed migrations from prisma/migrations/ in order.
+# This tracks migration history in _prisma_migrations, unlike `db push`,
+# which auto-syncs the schema without tracking — fine for dev, not for
+# production. The prior `db push` here silently ran outside the migration
+# history; be aware that an existing deploy may have a stale/empty
+# _prisma_migrations table and need `prisma migrate resolve --applied` to
+# catch up before this command will succeed. See README §11.
+CMD ["sh", "-c", "yarn prisma migrate deploy && node dist/index.js"]

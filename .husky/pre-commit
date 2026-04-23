@@ -1,0 +1,3 @@
+# Pre-commit: run lint-staged on staged files only.
+# Full typecheck + test suite run in CI — this hook is just a fast local gate.
+yarn lint-staged

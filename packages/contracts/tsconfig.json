@@ -5,7 +5,8 @@
     "rootDir": "src",
     "module": "CommonJS",
     "moduleResolution": "Node",
-    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "composite": true
   },
   "include": ["src/**/*"]
 }

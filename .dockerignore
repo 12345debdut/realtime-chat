@@ -23,6 +23,15 @@ packages/contracts/dist
 # otherwise tsc will read it, think nothing changed, and emit no files.
 **/*.tsbuildinfo
 
+# Environment files — real .env values must never get baked into an image.
+# Keep .env.example so anyone debugging the image knows what's required.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
 # VCS + editor
 .git
 .github

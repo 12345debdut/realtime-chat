@@ -18,11 +18,13 @@ This document covers the mobile client changes needed to address P0 ship blocker
 **Problem:** `auth: { token }` bakes a stale token into the Socket.IO config. On reconnect after token expiry, handshake fails forever.
 
 **Fix:** Use Socket.IO's `auth` callback form:
+
 ```ts
 auth: (cb) => {
-  secureStore.load().then(tokens => cb({ token: tokens?.accessToken ?? '' }));
-}
+  secureStore.load().then((tokens) => cb({ token: tokens?.accessToken ?? '' }));
+};
 ```
+
 This runs on every reconnect attempt, always pulling the latest token from Keychain.
 
 ### 2. Clear WatermelonDB on logout (`AuthRepository.ts`)
@@ -46,6 +48,7 @@ This runs on every reconnect attempt, always pulling the latest token from Keych
 **File:** `@rtc/contracts/src/connections.ts`, `@rtc/contracts/src/events.ts`
 
 Add:
+
 - `SentConnectionRequestWithUserSchema` (extends `ConnectionRequestSchema` with `receiver: UserSchema`)
 - `RevokeConnectionResponseSchema`
 - `S2C_ConnectionRequestRevokedSchema`
@@ -63,6 +66,7 @@ Add:
 **File:** `features/connections/presentation/hooks/useConnections.ts`
 
 Add:
+
 - `sentRequests` state
 - `revoking` state (string | null, like `acting`)
 - `fetchSent()` function

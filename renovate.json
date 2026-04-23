@@ -1,0 +1,73 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate config — replaces Dependabot. See .github/dependabot.yml (removed) for the prior equivalent.",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(deps)",
+    ":timezone(Asia/Kolkata)",
+    ":dependencyDashboard"
+  ],
+  "schedule": ["before 4am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 4am on the first day of the month"]
+  },
+  "packageRules": [
+    {
+      "description": "Group dev-dep minors/patches into a single PR — reviewers don't need 10 PRs for eslint plugin bumps.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies"
+    },
+    {
+      "description": "Group production patch-level bumps.",
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "production patches"
+    },
+    {
+      "description": "React Native upgrades are big-bang events (pod install, native rebuild). Manual only.",
+      "matchPackageNames": ["react-native", "react", "/^@react-native/"],
+      "enabled": false
+    },
+    {
+      "description": "WatermelonDB is a native module — upgrade alongside an iOS/Android pass.",
+      "matchPackageNames": ["@nozbe/watermelondb"],
+      "enabled": false
+    },
+    {
+      "description": "Prisma's client and CLI must bump together.",
+      "matchPackageNames": ["prisma", "@prisma/client"],
+      "groupName": "prisma"
+    },
+    {
+      "description": "Fastify plugins tend to break across majors in waves; group them.",
+      "matchPackageNames": ["/^@fastify/"],
+      "groupName": "fastify plugins"
+    },
+    {
+      "description": "GitHub Actions — monthly, separate from npm.",
+      "matchManagers": ["github-actions"],
+      "schedule": ["before 4am on the first day of the month"],
+      "groupName": "github actions",
+      "labels": ["dependencies", "ci"]
+    },
+    {
+      "description": "Docker base image — monthly.",
+      "matchManagers": ["dockerfile"],
+      "schedule": ["before 4am on the first day of the month"],
+      "groupName": "docker",
+      "labels": ["dependencies", "docker"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"],
+    "schedule": ["at any time"]
+  }
+}

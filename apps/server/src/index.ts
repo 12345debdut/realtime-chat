@@ -63,6 +63,35 @@ async function main() {
 
   await app.register(sensible);
 
+  // ── Global error handler ───────────────────────────────────────────────
+  //
+  // Route handlers should throw `app.httpErrors.*` (from @fastify/sensible)
+  // or return `reply.code(4xx).send({ error: '...' })` explicitly. Anything
+  // that escapes without a handled shape lands here.
+  //
+  // What this does:
+  //   - Logs the error server-side with Pino (full stack in dev, scrubbed in prod)
+  //   - Preserves the client-facing 4xx envelope for errors that already have one
+  //   - Normalises everything else to `{ error: 'internal_error' }` with a 500
+  //     so we never leak a stack trace, SQL fragment, or internal path name
+  //     through the HTTP response.
+  //
+  // Rate-limit hits (`FST_ERR_RATE_LIMIT_EXCEEDED`) are intentionally passed
+  // through to the plugin's default 429 response, not wrapped here.
+  app.setErrorHandler((err, req, reply) => {
+    const status = err.statusCode ?? 500;
+    if (status >= 500) {
+      req.log.error({ err }, 'unhandled_error');
+      return reply.code(500).send({ error: 'internal_error' });
+    }
+    // 4xx — the handler already chose a code; keep the client contract.
+    req.log.warn({ err, status }, 'client_error');
+    return reply.code(status).send({
+      error: err.code ?? 'bad_request',
+      message: err.message,
+    });
+  });
+
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(roomRoutes);

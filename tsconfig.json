@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "comment": [
+    "Solution tsconfig — does NOT compile anything itself; enables `tsc --build`",
+    "from the repo root, which compiles contracts before server (topologically).",
+    "",
+    "Mobile is deliberately excluded: it uses Metro as its bundler + the",
+    "@react-native/typescript-config preset. Hooking it into the project-",
+    "references graph would fight that toolchain for no real win.",
+    "",
+    "Usage:",
+    "  tsc --build                 # incremental build of contracts + server",
+    "  tsc --build --clean         # clear emit + tsbuildinfo",
+    "  tsc --build --force         # full rebuild"
+  ],
+  "files": [],
+  "references": [{ "path": "./packages/contracts" }, { "path": "./apps/server" }]
+}
