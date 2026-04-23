@@ -142,7 +142,7 @@ A product tour, grouped by user journey. Each caption ties the screen to the eng
 | **Android internal track** | not yet published   | —                                                                                                                                                                                                  |
 | **Web demo**               | out of scope for v1 | —                                                                                                                                                                                                  |
 
-Until the mobile builds are published, the fastest path to see it running is the [local development](#10-local-development) section — iOS simulator + `yarn workspace @rtc/server dev` gets you there in about 5 minutes.
+Until the mobile builds are published, the fastest path to see it running is the [development mode](#10-development-mode) section — iOS simulator + `yarn workspace @rtc/server dev` gets you there in about 5 minutes.
 
 ---
 
@@ -157,8 +157,8 @@ Until the mobile builds are published, the fastest path to see it running is the
 7. [Backend design](#7-backend-design)
 8. [Security model](#8-security-model)
 9. [Type safety across the wire](#9-type-safety-across-the-wire)
-10. [Local development](#10-local-development)
-11. [Deployment](#11-deployment)
+10. [Development mode](#10-development-mode)
+11. [Release mode](#11-release-mode)
 12. [Technology choices](#12-technology-choices)
 13. [Architectural tradeoffs](#13-architectural-tradeoffs)
 14. [Recently shipped](#14-recently-shipped)
@@ -521,86 +521,354 @@ A field rename on the server is a compile error on the mobile app on the next `y
 
 ---
 
-## 10. Local development
+## 10. Development mode
+
+How to run the app locally end-to-end, from a fresh clone to messages flying between two simulators.
 
 ### Prerequisites
 
-- Node.js **22.11+** (use `nvm`)
-- Yarn **3.6.4** (vendored via corepack; no global install needed)
-- Xcode 16+ with an iOS 18 simulator
-- Ruby 3.3+ (for CocoaPods; install via Homebrew — macOS system Ruby is too old)
-- Docker (optional, only if running Postgres locally)
+| Tool               | Version                       | Why                                            |
+| ------------------ | ----------------------------- | ---------------------------------------------- |
+| **Node.js**        | ≥ 22.11 (pinned in `.nvmrc`)  | Server + Metro                                 |
+| **Yarn 3**         | 3.6.4, vendored via corepack  | Workspaces                                     |
+| **Xcode**          | 16+ with an iOS 18 simulator  | Mobile iOS                                     |
+| **Ruby**           | 3.3+ + Bundler                | CocoaPods (macOS system Ruby is too old)       |
+| **Android Studio** | Hedgehog+ with Android SDK 34 | Mobile Android                                 |
+| **Docker**         | optional                      | Local Postgres + Redis via `docker-compose up` |
 
-### Bootstrap
+### One-time setup
 
 ```bash
-# Install workspace deps
+# 1. Enable corepack so `yarn` resolves to the pinned 3.6.4 shim.
+corepack enable
+
+# 2. Install everything. Yarn workspaces resolves apps/* + packages/* in one pass.
 yarn install
 
-# Compile shared contracts (required before server + mobile typecheck)
-yarn workspace @rtc/contracts build
+# 3. Build the shared contracts package. Server + mobile both import
+#    `@rtc/contracts` from its compiled `dist/` — the typecheck fails
+#    without this step.
+yarn build:contracts
 
-# Generate Prisma client
+# 4. Generate the Prisma client for the server.
 yarn workspace @rtc/server db:generate
+
+# 5. Install iOS pods (first time only; subsequent installs are cached).
+cd apps/mobile/ios
+bundle install
+bundle exec pod install
+cd ../..
 ```
 
-### Run the server
+### Environment variables — server
+
+Copy the template and fill it in:
 
 ```bash
-export DATABASE_URL="postgresql://..."
-export REDIS_URL="redis://localhost:6379"
-export JWT_ACCESS_SECRET="dev-access-secret"
-export JWT_REFRESH_SECRET="dev-refresh-secret"
-
-yarn workspace @rtc/server db:deploy   # run migrations
-yarn workspace @rtc/server dev         # tsx watch mode
+cp apps/server/.env.example apps/server/.env
 ```
 
-### Run the mobile app
+Required:
+
+| Var                  | Local default                                        | Notes                                                                                                                                                                                   |
+| -------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`       | `postgres://rtc:rtc@localhost:5432/rtc`              | Via docker-compose, or a Neon branch for shared-cloud dev. `lib/prisma.ts` auto-appends `connect_timeout=30&pool_timeout=30` for Neon cold-start mitigation — don't set those yourself. |
+| `REDIS_URL`          | `redis://localhost:6379`                             | `redis-server` via Homebrew, docker-compose, or Upstash.                                                                                                                                |
+| `JWT_ACCESS_SECRET`  | any 32-byte random string                            | `openssl rand -hex 32`                                                                                                                                                                  |
+| `JWT_REFRESH_SECRET` | any 32-byte random string, **different from access** | Rotating on each refresh; leaking either is a big deal.                                                                                                                                 |
+| `NODE_ENV`           | `development`                                        | Enables pino-pretty logs, disables rate-limit enforcement, reflects any Origin in CORS.                                                                                                 |
+
+Optional:
+
+| Var               | Default           | Notes                                                                                                          |
+| ----------------- | ----------------- | -------------------------------------------------------------------------------------------------------------- |
+| `PORT`            | 4000              | Port Fastify binds. Metro's host.docker.internal expects 4000 on iOS simulator; change both if you change one. |
+| `ACCESS_TTL_SEC`  | 900 (15 min)      | Short on purpose — mobile's axios interceptor handles refresh.                                                 |
+| `REFRESH_TTL_SEC` | 2592000 (30 days) |                                                                                                                |
+| `WEB_ORIGIN`      | empty             | Browser-client CORS allowlist. Irrelevant for mobile-only dev.                                                 |
+
+### Running services — pick one stack
+
+**Option A — fully local (docker-compose)**
 
 ```bash
-# Install iOS pods (first time)
-cd apps/mobile/ios && bundle install && bundle exec pod install && cd ../..
+docker-compose up -d   # Postgres 16 + Redis 7 on localhost
+yarn workspace @rtc/server db:deploy   # apply migrations
+yarn workspace @rtc/server dev         # tsx watch mode, port 4000
+```
 
-# Start Metro
+**Option B — Neon branch + Upstash**
+
+Point `DATABASE_URL` at a Neon dev branch, `REDIS_URL` at Upstash, then:
+
+```bash
+yarn workspace @rtc/server db:deploy
+yarn workspace @rtc/server dev
+```
+
+The server's `$queryRaw\`SELECT 1\`` warmup on boot and 4-minute keep-alive ping make Neon cold starts a non-issue for local dev.
+
+Either way, verify:
+
+```bash
+curl http://localhost:4000/health
+# {"status":"ok"}
+```
+
+### Running the mobile app
+
+```bash
+# Terminal 1 — Metro
 yarn workspace @rtc/mobile start --reset-cache
 
-# iOS
-yarn workspace @rtc/mobile ios --simulator="iPhone 15 Pro"
+# Terminal 2 — iOS (fastest path on Mac)
+yarn workspace @rtc/mobile ios --simulator="iPhone 16 Pro"
 
-# Android
+# …or Android
 yarn workspace @rtc/mobile android
 ```
 
-The mobile app honors `RTC_ENV=dev|prod` at Metro start time to flip between `localhost` and the Fly.io URL.
+**Pointing the app at a specific backend.** React Native's Metro does **not** expose shell environment variables to the JS bundle — only `process.env.NODE_ENV` is inlined. To flip between local and production server, edit `apps/mobile/src/foundation/network/config.ts`:
+
+```ts
+// apps/mobile/src/foundation/network/config.ts
+const USE_PROD = false; // ← toggle this
+```
+
+- `USE_PROD = false` → uses `http://localhost:4000` on iOS simulator, `http://10.0.2.2:4000` on Android emulator (standard host-alias mappings).
+- `USE_PROD = true` → uses the deployed Fly.io backend at `https://rtc-chat.fly.dev`.
+
+Save, shake the simulator (or press `r` in Metro), and the app reloads pointed at the new target.
+
+### Day-to-day workflow
+
+| What you want            | Command                                                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Start everything**     | docker-compose up -d, then `yarn workspace @rtc/server dev` in one terminal, `yarn workspace @rtc/mobile start --reset-cache` in another, then `yarn workspace @rtc/mobile ios` |
+| **Server hot-reload**    | Already active in `dev` mode (`tsx watch`). Changes to `src/**` reload within ~1 second.                                                                                        |
+| **Contract change**      | Edit `packages/contracts/src/*.ts` → `yarn build:contracts` → server picks it up on next save, mobile picks it up on Metro refresh.                                             |
+| **New Prisma migration** | `yarn workspace @rtc/server db:migrate --name descriptive_change` creates + applies.                                                                                            |
+| **Inspect DB**           | `yarn workspace @rtc/server db:studio` — opens Prisma Studio on `localhost:5555`.                                                                                               |
+| **Full CI locally**      | `yarn ci` — build contracts, lint, typecheck all workspaces, run both test suites.                                                                                              |
+| **Just tests**           | `yarn test`                                                                                                                                                                     |
+| **Reset mobile DB**      | Delete the app from the simulator and reinstall — WatermelonDB lives in the app sandbox.                                                                                        |
+
+### Common dev-time gotchas
+
+- **"Cannot find module '@rtc/contracts'"** on server start → run `yarn build:contracts`. The server imports the compiled `dist/`, not the source.
+- **Mobile can't reach `localhost`** → on Android emulator, use `10.0.2.2` (auto-mapped in `config.ts`); on a physical iPhone, point `config.ts` at your Mac's LAN IP and make sure both are on the same Wi-Fi.
+- **"Fastify plugin version mismatch"** → a fresh `yarn add @fastify/*` grabbed a v5-only major. Pin to `@fastify/helmet@^12` + `@fastify/rate-limit@^9` (both compatible with Fastify 4). Fixed upstream in `package.json` — this is a warning for future bumps.
+- **Pods fail to install on Xcode 16** → ensure Ruby 3.3+ is active (`ruby --version`). System Ruby 2.6 on macOS will silently install outdated gems that crash `pod install`.
 
 ---
 
-## 11. Deployment
+## 11. Release mode
 
-The server is Dockerized and ships to Fly.io.
+How to ship. Covers server → Fly.io and mobile → iOS TestFlight / Android internal-testing track.
+
+### Server → Fly.io
+
+**First-time setup** (skip if the app already exists):
 
 ```bash
-# One-time: create the app
+# Create the Fly app. The name is global — pick one that's yours.
 fly apps create rtc-chat
 
-# Set secrets
+# Set all production secrets in one call. Never commit these anywhere.
 fly secrets set \
   DATABASE_URL="postgresql://..." \
   REDIS_URL="redis://..." \
-  JWT_ACCESS_SECRET="..." \
-  JWT_REFRESH_SECRET="..."
+  JWT_ACCESS_SECRET="$(openssl rand -hex 32)" \
+  JWT_REFRESH_SECRET="$(openssl rand -hex 32)" \
+  NODE_ENV=production
 
-# Deploy
-fly deploy
+# If you have a web client, also:
+fly secrets set WEB_ORIGIN="https://app.example.com"
 ```
 
-### Key deployment lessons from building this
+**Ongoing deploys** — two options:
 
-1. **Never ship an incremental `.tsbuildinfo` in a Docker image.** If `.dockerignore` only excludes `dist/` but `incremental: true` puts `.tsbuildinfo` next to `tsconfig.json`, tsc in the build stage reads it, decides "nothing changed", and skips emit. The image ships with zero compiled code and crashes at `node dist/index.js`. Fixed by excluding `**/*.tsbuildinfo` and pinning `tsBuildInfoFile` inside `dist/`.
-2. **Compile shared workspaces before the app.** The server's `Dockerfile` runs `yarn build` in `packages/contracts` **before** running it in `apps/server`, because the server's runtime `require('@rtc/contracts')` resolves to the built `dist/index.js` — which has to exist.
-3. **Use `auto_stop_machines = "off"` + `min_machines_running = 1`** for a WebSocket server. Fly's default is to scale to zero, which kills long-lived socket connections.
-4. **Pin the primary region close to your users.** I use `bom` (Mumbai). The deprecated `bos` region taught me this the hard way.
+_Option A — manual from your Mac:_
+
+```bash
+fly deploy --remote-only
+```
+
+Build runs on Fly's remote builder (no local Docker required). First deploy takes ~5 minutes; subsequent deploys with a warm yarn cache take ~2 minutes.
+
+_Option B — GitHub Actions_ (already wired up in `.github/workflows/deploy-server.yml`):
+
+1. Add `FLY_API_TOKEN` to the repo's `production` environment secrets (`fly auth token` to generate one).
+2. Push to `main` with changes under `apps/server/**`, `packages/contracts/**`, or `fly.toml`.
+3. The workflow runs server typecheck + tests as a drift guard, then calls `flyctl deploy`. A required reviewer on the `production` environment (set in `.github/BRANCH_PROTECTION.md`) makes it a "push → wait for approval → deploys" flow.
+
+**Verifying a release:**
+
+```bash
+# Health endpoint should be 200
+curl https://rtc-chat.fly.dev/health
+# {"status":"ok"}
+
+# Helmet headers should be present
+curl -I https://rtc-chat.fly.dev/health | grep -iE 'strict-transport|x-content-type|referrer-policy'
+# strict-transport-security: max-age=15552000; includeSubDomains
+# x-content-type-options: nosniff
+# referrer-policy: no-referrer
+
+# Rate limit headers should be present on responses
+curl -I https://rtc-chat.fly.dev/health | grep -i x-ratelimit
+# x-ratelimit-limit: 300
+# x-ratelimit-remaining: 297
+
+# Live logs
+fly logs -a rtc-chat
+```
+
+**Rolling back:**
+
+```bash
+fly releases -a rtc-chat          # list versions
+fly deploy --image registry.fly.io/rtc-chat:deployment-<id>  # redeploy a prior image
+```
+
+Or, faster, scale the current release to 0 then back to 1 after fixing forward:
+
+```bash
+fly scale count 0 -a rtc-chat
+# fix the problem, deploy again
+fly scale count 1 -a rtc-chat
+```
+
+**Database migrations in production:**
+
+The Dockerfile's `CMD` runs `npx prisma migrate deploy` before `node dist/index.js`, so committed migrations apply automatically on each deploy. No manual step needed in normal operation.
+
+If a migration was applied manually (e.g., via `db push` in an earlier era) and the `_prisma_migrations` table is out of sync:
+
+```bash
+fly ssh console -C "cd /app/apps/server && npx prisma migrate resolve --applied <migration_name>"
+```
+
+Check status without applying:
+
+```bash
+fly ssh console -C "cd /app/apps/server && npx prisma migrate status"
+```
+
+**Server deployment lessons** — learned by breaking things:
+
+1. **Never ship an incremental `.tsbuildinfo` in a Docker image.** If `.dockerignore` only excludes `dist/` but `incremental: true` puts `.tsbuildinfo` next to `tsconfig.json`, tsc in the build stage reads it, decides "nothing changed", and skips emit. The image ships with zero compiled code and crashes at `node dist/index.js`. Fixed via `**/*.tsbuildinfo` in `.dockerignore` + `tsBuildInfoFile: ./dist/.tsbuildinfo` in each workspace's `tsconfig.json`.
+2. **Compile shared workspaces before the app.** The Dockerfile compiles `packages/contracts` **before** `apps/server` because the server's runtime `require('@rtc/contracts')` resolves to `dist/index.js`, which must exist at build time.
+3. **`auto_stop_machines = "off"` + `min_machines_running = 1`** for a WebSocket server. Fly's default scale-to-zero kills long-lived socket connections.
+4. **Pin the primary region close to your users.** Mumbai (`bom`) in `fly.toml`. Check [fly.io/docs/reference/regions](https://fly.io/docs/reference/regions/) for options; deprecated regions silently disappear.
+5. **Fastify plugin majors don't match Fastify majors.** `@fastify/helmet@13` targets Fastify 5; we run Fastify 4. Pin `@fastify/helmet@^12` and `@fastify/rate-limit@^9` until we bump Fastify itself.
+6. **Use `migrate deploy` in the Dockerfile CMD, not `db push`.** `db push` silently bypasses migration history — fine for dev, dangerous in prod because it reverses uncommitted schema changes.
+
+### Mobile → iOS TestFlight
+
+**Pre-flight:**
+
+1. In `apps/mobile/src/foundation/network/config.ts`, set `USE_PROD = true` so release builds hit the Fly.io backend.
+2. Bump the build number in Xcode: **Xcode → Project navigator → mobile → General → Build**. Increment by 1 for every TestFlight upload (Apple enforces monotonic build numbers per version).
+3. Bump the version string in the same panel if this is a user-visible release.
+
+**Archive:**
+
+```bash
+cd apps/mobile/ios
+xcodebuild -workspace mobile.xcworkspace \
+  -scheme mobile \
+  -configuration Release \
+  -archivePath build/mobile.xcarchive \
+  archive
+```
+
+Or, for interactive signing: **Xcode → Product → Archive**.
+
+**Upload to App Store Connect:**
+
+- Open the Organizer (Xcode → Window → Organizer).
+- Select the new archive → **Distribute App** → **App Store Connect** → **Upload**.
+- Xcode walks through signing with your team's distribution certificate.
+- Wait 10–30 minutes for App Store Connect's "processing" step.
+
+**TestFlight:**
+
+- In App Store Connect, the new build appears under **TestFlight → iOS Builds**.
+- Add it to an internal group (up to 100 people, no Apple review) — available immediately.
+- For external testing, submit for a short "Beta App Review" (typically same-day).
+- Testers install via the TestFlight app on iOS.
+
+**Common iOS release gotchas:**
+
+- **"No profiles matching this signing identity"** → regenerate in developer.apple.com or let Xcode "Automatically manage signing" do it. The `*.mobileprovision` files are gitignored, intentionally.
+- **Archive is grayed out** → make sure the scheme is on "Any iOS Device" or a real device, not a simulator.
+- **Binary rejected for "missing purpose string"** → every `NS*UsageDescription` key in `Info.plist` must have a non-empty value, even if the feature isn't active yet.
+
+### Mobile → Android internal-testing track
+
+**Pre-flight:**
+
+1. `USE_PROD = true` in `config.ts` (same as iOS).
+2. Bump `versionCode` (integer, monotonic) and `versionName` in `apps/mobile/android/app/build.gradle`.
+
+**Release keystore** (first time only):
+
+```bash
+keytool -genkey -v \
+  -keystore apps/mobile/android/app/release.keystore \
+  -alias rtc-release \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Store the password in `apps/mobile/android/key.properties` (gitignored — never commit this file):
+
+```
+storeFile=release.keystore
+storePassword=…
+keyAlias=rtc-release
+keyPassword=…
+```
+
+Wire it into `android/app/build.gradle`'s `signingConfigs { release { … } }` block.
+
+**Build a signed AAB** (Android App Bundle — Play Store's preferred format):
+
+```bash
+cd apps/mobile/android
+./gradlew bundleRelease
+# output: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+```
+
+**Upload to Play Console:**
+
+- Create the app in Play Console if it doesn't exist.
+- **Testing → Internal testing → Create release → Upload** the `.aab`.
+- Add tester emails. Internal testing is usually available within an hour; no Play review for this track.
+- Testers install via a Play opt-in link.
+
+**Common Android release gotchas:**
+
+- **"Keystore was tampered with or password was incorrect"** → `key.properties` path is relative to `android/app/build.gradle`; double-check.
+- **"This bundle contains native code and is not optimized"** → make sure Hermes is enabled (it is, in the RN 0.85 default template) and `universalApk false` in the bundle config.
+- **Play Console rejection for missing data-safety form** → fill it in Play Console → App content → Data safety. Truthful answers for this codebase are in `PRIVACY.md`.
+
+### Flipping production back off for local dev
+
+After releasing, remember to flip `USE_PROD = false` again in `config.ts` before your next dev session, or add a one-line guard:
+
+```ts
+// apps/mobile/src/foundation/network/config.ts
+const USE_PROD = !__DEV__; // automatic: DEV builds → local, release builds → prod
+```
+
+`__DEV__` is `true` in Metro's development builds, `false` in release bundles — so this makes the flip automatic. Keep the explicit `const USE_PROD = true | false` form instead if you want the ability to hit prod from a dev build (debugging against prod state).
+
+### Cadence
+
+- **Server** — deploy on merge to `main`. GitHub Actions + required reviewer gating means the "click approve" step is the release ceremony.
+- **iOS / Android** — less frequent. Target one TestFlight / internal release per meaningful user-visible change. Don't churn build numbers for backend-only changes.
+- **Database migrations** — committed alongside the code that uses them. The production Dockerfile applies them on deploy, so server code and its migration ship as a single atomic step.
 
 ---
 
