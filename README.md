@@ -1,8 +1,31 @@
 # Realtime Chat
 
+<!-- badges: update the repo slug once this pushes to GitHub -->
+<!-- replace `debdutsaha/realtime-chat` with your own org/repo if you fork -->
+[![CI](https://github.com/debdutsaha/realtime-chat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/debdutsaha/realtime-chat/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
+[![Node](https://img.shields.io/badge/Node-22-brightgreen)](./.nvmrc)
+[![React Native](https://img.shields.io/badge/React_Native-0.85-61dafb)](./apps/mobile)
+[![Made with TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6)](./packages/tsconfig)
+
 An offline-first, realtime 1:1 and group messaging app built end-to-end to demonstrate senior-level craft across **React Native (New Architecture)**, **animations (Reanimated 4 / Worklets)**, **offline sync (WatermelonDB + JSI)**, and a **production-grade backend** on Node.js, Fastify, Socket.IO, and Postgres — deployed to Fly.io.
 
 This is not a toy. Every decision in this repo is deliberate and traceable to a real product concern: latency, reliability on bad networks, data consistency, security, developer ergonomics, and deploy confidence.
+
+## Try it
+
+<!-- Replace these placeholders once you have real URLs. Keep the section here -->
+<!-- rather than deleting it — even a "none yet, run locally via §10" entry is -->
+<!-- more useful to a reviewer than silence. -->
+
+| Target | Status | Link |
+|---|---|---|
+| **Server API** | TBD | `https://rtc-chat.fly.dev` (set `RTC_ENV=prod` in Metro to point the mobile app here) |
+| **iOS TestFlight** | not yet published | — |
+| **Android internal track** | not yet published | — |
+| **Web demo** | out of scope for v1 | — |
+
+Until the mobile builds are published, the fastest path to see it running is the [local development](#10-local-development) section — iOS simulator + `yarn workspace @rtc/server dev` gets you there in about 5 minutes.
 
 ---
 
@@ -20,7 +43,8 @@ This is not a toy. Every decision in this repo is deliberate and traceable to a 
 10. [Local development](#10-local-development)
 11. [Deployment](#11-deployment)
 12. [Engineering trade-offs I consciously made](#12-engineering-trade-offs-i-consciously-made)
-13. [What I'd build next](#13-what-id-build-next)
+13. [Recently shipped](#13-recently-shipped)
+14. [What I'd build next](#14-what-id-build-next)
 
 ---
 
@@ -293,10 +317,13 @@ Each event is Zod-validated at the edge. Invalid payloads are rejected with a ty
 ### Data model (Prisma)
 
 ```
-User          id, email, username, passwordHash, createdAt
+User          id, handle, displayName, avatarUrl, passwordHash, createdAt
+              + privacy flags: readReceiptsEnabled, onlineStatusVisible, typingIndicatorsEnabled
+              + personal info (optional): bio, email, phone, dateOfBirth, location
 Room          id, kind (dm|group), name?, createdAt
-Membership    userId, roomId, role, joinedAt
+Membership    userId, roomId, role, joinedAt, lastReadMessageId
 Message       id, clientId @unique, roomId, senderId, body, createdAt
+Connection    senderId, receiverId, status (pending|accepted|ignored|blocked)
 RefreshToken  id, userId, tokenHash, expiresAt, revokedAt
 ```
 
@@ -317,6 +344,8 @@ The `clientId @unique` constraint is what makes the upsert safe under concurrent
 | **Room authorization** | Every `message.send` checks `Membership.findFirst({ where: { roomId, userId } })`. No membership, no delivery. |
 | **Rate limiting** | Fastify `@fastify/rate-limit` on auth endpoints. Per-IP and per-user. |
 | **Transport** | HTTPS + WSS end-to-end via Fly's edge. No plaintext anywhere. |
+| **User privacy controls** | WhatsApp-style bilateral model: if you disable read receipts, you stop *both* sending and receiving them. Settings are cached in Redis (5-min TTL) so socket handlers check them in O(1) before broadcasting typing, presence, or read events. |
+| **Personal info leak prevention** | `PublicUserSchema` omits `bio`, `email`, `phone`, `dateOfBirth`, `location`. Connection/peer responses use `PublicUser`; only `GET /me` returns the full user. Enforced at the schema layer in `@rtc/contracts`. |
 
 **What I deliberately did NOT add** (and why):
 - **E2E encryption.** It's a huge project (Signal protocol is ~10kLoC) and out of scope for a demo. I'd use `libsignal` and layer it above the transport.
@@ -471,18 +500,29 @@ A senior engineer can defend every choice **and** name what they gave up.
 
 ---
 
-## 13. What I'd build next
+## 13. Recently shipped
 
-Ranked by impact-to-effort ratio, the way I'd pitch it in a product review:
+These were on the "next" list in earlier drafts and are now in production:
 
-1. **Read receipts + delivery status icons** (1 day) — The data model already supports it (`message.read` event exists). Pure UI work.
-2. **Presence** (1 day) — Redis `SET presence:{userId} EX 30` on connect + periodic ping. Broadcast `presence.update` to interested rooms. Huge perceived value.
-3. **Push notifications** (3 days) — APNs + FCM via a single `@react-native-firebase/messaging` integration. Backend dispatches on `message.new` when target isn't online.
-4. **Media messages** (4 days) — S3 presigned uploads, thumbnail generation on the server, progressive image loading on the client. Gives the demo real production feel.
-5. **E2E encryption (Signal protocol)** (2 weeks) — `libsignal` on both sides. Show the encrypted payload in the DB. This is the "senior+" stretch goal.
-6. **Message search** (1 week) — Postgres full-text for V1, migrate to Meilisearch or OpenSearch if it becomes the bottleneck.
-7. **Observability** (3 days) — OpenTelemetry traces on the server, Sentry on the mobile app, dashboards for p95 send-to-ack latency. This is what separates a hobby project from a production one.
-8. **E2E tests** (1 week) — Detox for the mobile app, `supertest` + `socket.io-client` for the server. CI runs them on every PR.
+- **Read receipts** — Per-message delivery + read state, `message.read` event, bilateral privacy (sender & receiver must both allow).
+- **Presence / online status** — Redis-backed online presence with visibility gated by the user's privacy setting.
+- **Typing indicators** — UI-thread dots animation, client respects MMKV privacy flag before emitting, server respects privacy cache before broadcasting.
+- **Connections / friend requests** — `Connection` model with pending/accepted/ignored/blocked, connection-request cards, accept/ignore actions.
+- **User privacy controls** — WhatsApp-style bilateral: read receipts, online status, typing indicators. Settings cached in Redis for O(1) socket-path lookups.
+- **Personal information** — Bio, email, phone, DOB, location; edit via dedicated `PersonalInfoScreen` with per-field bottom sheets, validation (E.164 phone, age ≥ 13, email format). Profile screen is read-only; edits happen via Personal Info.
+- **Neon cold-start mitigation** — DB warmup query on server boot + 4-minute keep-alive ping to prevent Neon's serverless Postgres from sleeping; mobile refresh timeout tuned to 15s with overall HTTP timeout at 30s.
+
+## 14. What I'd build next
+
+Ranked by impact-to-effort ratio:
+
+1. **Push notifications** (3 days) — APNs + FCM via `@react-native-firebase/messaging`. Backend dispatches on `message.new` when target isn't online.
+2. **Media messages** (4 days) — S3 presigned uploads, thumbnail generation on the server, progressive image loading on the client.
+3. **Group chats polish** (3 days) — Avatars, mentions, admin/member roles in the UI. Data model already supports `kind = 'group'`.
+4. **Message search** (1 week) — Postgres full-text for V1, migrate to Meilisearch if it becomes the bottleneck.
+5. **Observability** (3 days) — OpenTelemetry traces on the server, Sentry on the mobile app, dashboards for p95 send-to-ack latency.
+6. **E2E tests** (1 week) — Detox for the mobile app, `supertest` + `socket.io-client` for the server. CI runs them on every PR.
+7. **E2E encryption (Signal protocol)** (2 weeks) — `libsignal` on both sides. Show the encrypted payload in the DB. The "senior+" stretch goal.
 
 ---
 

@@ -1,10 +1,10 @@
-import type { FastifyInstance } from 'fastify';
 
 import { PrivacySettingsUpdateSchema, ProfileUpdateSchema } from '@rtc/contracts';
+import type { FastifyInstance } from 'fastify';
 
-import { authenticate } from '../middleware/authenticate';
 import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
+import { authenticate } from '../middleware/authenticate';
 
 export async function meRoutes(app: FastifyInstance) {
   app.get('/me', { preHandler: authenticate }, async (req, reply) => {

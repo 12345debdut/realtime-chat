@@ -12,7 +12,7 @@ import { PersonalInfoScreen } from '../features/settings/presentation/screens/Pe
 import { PrivacyScreen } from '../features/privacy/presentation/screens/PrivacyScreen';
 import { ProfileScreen } from '../features/profile/presentation/screens/ProfileScreen';
 import { useTheme } from '../ui/theme/ThemeProvider';
-import { fontFamily, typography } from '../ui/theme/tokens';
+import { fontFamily } from '../ui/theme/tokens';
 
 import { TabNavigator } from './TabNavigator';
 import type { RootStackParamList } from './types';

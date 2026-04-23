@@ -23,6 +23,10 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    // `any` is a warning, not an error. Test mocks, external-lib adapters, and
+    // a handful of narrow escape hatches legitimately need it. Keep it visible,
+    // don't block CI.
+    '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/consistent-type-imports': 'error',
     'import/order': [
       'error',

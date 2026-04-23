@@ -60,7 +60,7 @@ beforeEach(() => {
 describe('tagRepository.createTag', () => {
   it('creates a tag with name, color, and createdAt set', async () => {
     mockNoDuplicateTag();
-    const mockTag = { id: 'local-1', name: 'Work', color: '#FF6B6B', serverId: null, createdAt: new Date() };
+    const mockTag: any = { id: 'local-1', name: 'Work', color: '#FF6B6B', serverId: null, createdAt: new Date() };
 
     col.tags.create.mockImplementation((setter: (t: any) => void) => {
       const record: any = {};

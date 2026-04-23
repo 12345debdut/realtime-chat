@@ -10,8 +10,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
 import { Avatar, PressableScale, Text, useTheme } from '../../../../ui';
 
 export interface TagInfo {
@@ -39,7 +37,7 @@ export function ChatListItem({
   preview,
   time,
   unreadCount,
-  isPinned,
+  isPinned: _isPinned,
   isOnline,
   tags,
   variant = 'flat',

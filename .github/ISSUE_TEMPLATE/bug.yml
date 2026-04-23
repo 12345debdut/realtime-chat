@@ -1,0 +1,61 @@
+name: Bug report
+description: Something doesn't work as expected.
+title: '[bug] '
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: One or two sentences describing the observable problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps a reviewer can follow.
+      placeholder: |
+        1. Open the app
+        2. Go to Settings → Personal Information
+        3. Tap "Phone" and enter …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      placeholder: |
+        Expected: field saves, bottom sheet closes.
+        Actual:   server 400, sheet stays open.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Mobile / iOS
+        - Mobile / Android
+        - Server
+        - Contracts / types
+        - Deploy / infra
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: build
+    attributes:
+      label: Build / version
+      description: Commit SHA, app version, or server deploy ID.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Redact any tokens or personal info before pasting.
+      render: shell

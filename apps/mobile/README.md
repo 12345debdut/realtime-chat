@@ -1,97 +1,95 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# @rtc/mobile
 
-# Getting Started
+React Native 0.85 (bare CLI, New Architecture on) — the client for Realtime Chat.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Stack
 
-## Step 1: Start Metro
+- **React Native 0.85**, New Arch (Fabric, TurboModules, Bridgeless)
+- **WatermelonDB** — SQLite via JSI; the source of truth for chat data
+- **Reanimated 4** + **Gesture Handler 2** — UI-thread animations and gestures
+- **FlashList** — virtualized message list
+- **Zustand** — ephemeral UI state (never persistent)
+- **TanStack Query** — REST request dedup + retries
+- **socket.io-client** — realtime
+- **MMKV** — fast KV for flags, last-seen, privacy cache
+- **react-native-keychain** — refresh tokens at rest (encrypted)
+- **axios** — HTTP with auth refresh interceptor
+- **Zod** via `@rtc/contracts` — boundary validation
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Layout
 
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```
+src/
+├── app/              # App root, providers, navigation host
+├── navigation/       # React Navigation stack config
+├── foundation/
+│   ├── network/      # axios client + refresh interceptor
+│   ├── storage/      # MMKV + Keychain wrappers
+│   └── ui/           # primitives (Text, PressableScale, theme)
+├── features/
+│   ├── auth/         # login, register, refresh, restoreUser
+│   ├── chat/         # FlashList, MessageBubble, InputBar, TypingDots, useChatRoom
+│   ├── connections/  # friend requests, ConnectionRequestCard
+│   ├── privacy/      # PrivacyScreen, privacyStore, privacyRepository
+│   ├── profile/      # read-only ProfileScreen
+│   ├── settings/     # SettingsScreen, PersonalInfoScreen
+│   └── users/        # user search
+├── lib/              # helpers (format, mask)
+├── ui/               # cross-feature UI components
+└── __tests__/        # jest
 ```
 
-## Step 2: Build and run your app
+Each feature follows a `data/` (repository, API) + `presentation/` (screens, components, hooks, state) split.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## Prerequisites
 
-### Android
+- Node.js **22.11+**
+- Yarn **3.6.4** (via corepack)
+- Xcode 16+ with iOS 18 simulator
+- Ruby 3.3+ + Bundler (for CocoaPods; system Ruby is too old)
+- Android Studio + Android SDK 34+
 
-```sh
-# Using npm
-npm run android
+## First-time setup
 
-# OR using Yarn
-yarn android
+```bash
+# from repo root
+yarn install
+yarn workspace @rtc/contracts build
+
+# install iOS pods
+cd apps/mobile/ios && bundle install && bundle exec pod install && cd ../..
 ```
 
-### iOS
+## Run
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+```bash
+# Metro
+yarn workspace @rtc/mobile start --reset-cache
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+# iOS
+yarn workspace @rtc/mobile ios --simulator="iPhone 15 Pro"
 
-```sh
-bundle install
+# Android
+yarn workspace @rtc/mobile android
 ```
 
-Then, and every time you update your native dependencies, run:
+`RTC_ENV=dev|prod` at Metro start flips between localhost and the fly.io URL.
 
-```sh
-bundle exec pod install
+## Tests + typecheck
+
+```bash
+yarn workspace @rtc/mobile typecheck
+yarn workspace @rtc/mobile test
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Key patterns
 
-```sh
-# Using npm
-npm run ios
+**Optimistic send.** Every `message.send` generates a UUID `clientId`, renders instantly, and reconciles on server ack. Offline? The outbox holds it; the sync engine drains when the socket reconnects.
 
-# OR using Yarn
-yarn ios
-```
+**Local DB is the source of truth.** Components subscribe to WatermelonDB observables. Network writes *into* the DB; the UI re-renders because the observable fired.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+**Privacy-aware actions.** `useTypingIndicator` and `useChatRoom` check MMKV privacy flags before emitting socket events. The server also enforces this server-side.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+**Read-only profile, dedicated editor.** `ProfileScreen` displays but never edits. All edits flow through `PersonalInfoScreen` (settings) with per-field bottom sheets, validation, and server-side error surfacing.
 
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+**Backward-compatible cache.** `AuthRepository.restoreUser()` backfills any missing fields (privacy, personal info) when hydrating a user cached before those fields existed.

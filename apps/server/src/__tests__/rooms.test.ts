@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 
-import './helpers';
-import { buildTestApp, createMockMembership, createMockRoom, createMockTag, createMockRoomTag, createMockUser } from './helpers';
 import { prisma } from '../lib/prisma';
 import { roomRoutes } from '../routes/rooms';
+
+import { buildTestApp, createMockMembership, createMockRoom, createMockTag } from './helpers';
 
 const mockPrisma = prisma as any;
 
@@ -173,6 +173,11 @@ describe('GET /rooms/:id/messages', () => {
   it('should return messages when the user is a member of the room', async () => {
     const membership = createMockMembership({ userId: 'user-1', roomId: 'room-msg' });
     mockPrisma.membership.findUnique.mockResolvedValue(membership);
+    // Route also calls membership.findMany to compute read receipts.
+    mockPrisma.membership.findMany.mockResolvedValue([
+      { userId: 'user-1', lastReadMessageId: null },
+      { userId: 'user-2', lastReadMessageId: null },
+    ]);
 
     const now = new Date('2025-01-15T12:00:00Z');
     const messages = [
@@ -229,7 +234,6 @@ describe('GET /rooms/:id/messages', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 describe('GET /rooms — pin & tag metadata', () => {
   it('should return isPinned=false when user has no pin', async () => {
-    const now = new Date();
     mockPrisma.room.findMany.mockResolvedValue([
       createMockRoom({
         memberships: [

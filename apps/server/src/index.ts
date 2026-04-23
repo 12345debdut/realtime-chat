@@ -3,6 +3,9 @@
  * sharing the same HTTP server instance so both live behind one port.
  */
 import cors from '@fastify/cors';
+// eslint-disable-next-line import/default
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import Fastify from 'fastify';
 
@@ -24,9 +27,40 @@ async function main() {
         transport: { target: 'pino-pretty', options: { colorize: true } },
       }
     : { level: 'info' };
-  const app = Fastify({ logger: loggerConfig });
+  const app = Fastify({ logger: loggerConfig, trustProxy: true });
 
-  await app.register(cors, { origin: true });
+  // ── Security middleware ────────────────────────────────────────────────
+  //
+  // CORS:
+  //   - dev: reflect any origin (convenient for Metro/localhost)
+  //   - prod: restrict to WEB_ORIGIN allowlist. Mobile clients don't send
+  //           Origin, so they're unaffected. `true` in prod would let any
+  //           malicious site make credentialed fetches with a stolen token.
+  const webOrigins = env.WEB_ORIGIN
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  await app.register(cors, {
+    origin: isDev ? true : (webOrigins.length > 0 ? webOrigins : false),
+    credentials: true,
+  });
+
+  // Helmet — HSTS, X-Content-Type-Options, Referrer-Policy, etc.
+  // CSP disabled because we serve JSON only; no HTML to protect.
+  await app.register(helmet, { contentSecurityPolicy: false });
+
+  // Global rate limit — 300 req/min/IP as a DoS backstop. Individual routes
+  // (auth) tighten this further via their own `config.rateLimit`.
+  // In dev, `allowList` bypasses enforcement so hot reload / test scripts
+  // don't trip the limiter; the plugin still registers so per-route configs
+  // remain wired.
+  await app.register(rateLimit, {
+    global: true,
+    max: 300,
+    timeWindow: '1 minute',
+    allowList: () => isDev,
+  });
+
   await app.register(sensible);
 
   await app.register(authRoutes);

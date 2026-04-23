@@ -3,7 +3,7 @@ import { type ViewStyle } from 'react-native';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
-import { useTheme, type ColorProp } from './theme/ThemeProvider';
+import { type ColorProp } from './theme/ThemeProvider';
 
 interface Props {
   name: string;
@@ -22,8 +22,6 @@ export function IconButton({
   hitSlop = 8,
   style,
 }: Props) {
-  const theme = useTheme();
-
   return (
     <PressableScale
       onPress={onPress}

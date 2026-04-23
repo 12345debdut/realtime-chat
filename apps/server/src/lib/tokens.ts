@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 
+import type { AuthTokens } from '@rtc/contracts';
+// eslint-disable-next-line import/default
 import jwt from 'jsonwebtoken';
 
-import type { AuthTokens } from '@rtc/contracts';
 
 import { env } from './env';
 import { prisma } from './prisma';

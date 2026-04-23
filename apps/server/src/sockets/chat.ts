@@ -8,9 +8,6 @@
  * Presence: an ephemeral Redis key with a TTL tracks last-seen; pub/sub
  *        broadcasts online/offline transitions (wired minimally here).
  */
-import { createAdapter } from '@socket.io/redis-adapter';
-import { Server, type Socket } from 'socket.io';
-
 import {
   C2S_MessageDeleteSchema,
   C2S_MessageSendSchema,
@@ -26,7 +23,11 @@ import {
   type S2C_MessageFail,
   type S2C_MessageNew,
 } from '@rtc/contracts';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { Server, type Socket } from 'socket.io';
 
+
+import { env } from '../lib/env';
 import { prisma } from '../lib/prisma';
 import { getPrivacy } from '../lib/privacyCache';
 import { pubClient, redis, subClient } from '../lib/redis';
@@ -64,8 +65,20 @@ export function getUserSockets(): Map<string, Set<string>> {
 
 export function attachChatSockets(http: unknown) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Socket.IO CORS mirrors the REST CORS policy (see `src/index.ts`):
+  // dev is permissive for Metro/localhost, prod restricts to the WEB_ORIGIN
+  // allowlist. Mobile clients don't send an Origin header so they're
+  // unaffected. Auth is still gated by JWT below — this is defense in depth.
+  const isDev = env.NODE_ENV === 'development';
+  const webOrigins = env.WEB_ORIGIN
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   const io = new Server(http as any, {
-    cors: { origin: '*' },
+    cors: {
+      origin: isDev ? true : (webOrigins.length > 0 ? webOrigins : false),
+      credentials: true,
+    },
     transports: ['websocket'],
   });
 

@@ -106,13 +106,14 @@ export function useTypingIndicator(roomId: string): UseTypingIndicatorReturn {
       }
     });
 
+    const typers = typersRef.current;
     return () => {
       unsubscribe();
       // Clear all expire timers on cleanup
-      for (const timer of typersRef.current.values()) {
+      for (const timer of typers.values()) {
         clearTimeout(timer);
       }
-      typersRef.current.clear();
+      typers.clear();
       setVisible(false);
     };
   }, [roomId]);

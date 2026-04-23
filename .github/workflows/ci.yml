@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same PR/branch — no point burning minutes on
+# commits that have been superseded.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: typecheck · lint · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enable corepack (yarn 3)
+        run: corepack enable
+
+      # Yarn 3 cache — keyed on yarn.lock so PRs with no dep changes hit cache.
+      - name: Cache yarn install
+        uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/install-state.gz
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: yarn-${{ runner.os }}-
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      # Contracts is the shared schema package; server + mobile typecheck
+      # depend on its compiled `dist/` output, so this must run before
+      # typecheck.
+      - name: Build @rtc/contracts
+        run: yarn build:contracts
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Typecheck (contracts + server + mobile)
+        run: yarn typecheck
+
+      - name: Tests (server + mobile)
+        run: yarn test
+
+      # Surface any runtime secrets that snuck into the diff. `gitleaks` is
+      # idempotent — this is a safety net on top of pre-commit hooks you may
+      # add later.
+      - name: Secrets scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

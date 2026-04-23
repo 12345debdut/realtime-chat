@@ -14,7 +14,6 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
-  runOnJS,
   Easing,
 } from 'react-native-reanimated';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';

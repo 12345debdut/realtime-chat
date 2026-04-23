@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 
-import './helpers';
+import { prisma } from '../lib/prisma';
+import { connectionRoutes } from '../routes/connections';
+import { getIO, getUserSockets } from '../sockets/chat';
+
 import {
   buildTestApp,
   createMockConnectionRequest,
   createMockRoom,
   createMockUser,
 } from './helpers';
-import { prisma } from '../lib/prisma';
-import { getIO, getUserSockets } from '../sockets/chat';
-import { connectionRoutes } from '../routes/connections';
 
 // ── Typed references to the mocked prisma models ───────────────────────────
 const mockPrisma = prisma as any;

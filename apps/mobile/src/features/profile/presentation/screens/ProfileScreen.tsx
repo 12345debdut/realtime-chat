@@ -7,7 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useAuthStore } from '../../../auth/presentation/state/authStore';
 import type { RootStackParamList } from '../../../../navigation/types';
-import { Avatar, Icon, IconButton, PressableScale, SectionHeader, Text, useTheme } from '../../../../ui';
+import { Avatar, Icon, IconButton, SectionHeader, Text, useTheme } from '../../../../ui';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -23,7 +23,8 @@ export function ProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <IconButton name="arrow-left" size={22} color="text" onPress={() => navigation.goBack()} />
-        <IconButton name="magnify" size={22} color="text" />
+        <Text variant="titleSm">Profile</Text>
+        <View style={{ width: 36 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
@@ -36,14 +37,16 @@ export function ProfileScreen() {
           <Text variant="body" color="textMuted" style={{ marginTop: theme.spacing.xs }}>
             {user?.handle ? `@${user.handle}` : ''}
           </Text>
-          {user?.bio && (
-            <Text variant="body" color="textMuted" style={{ marginTop: 8, textAlign: 'center', paddingHorizontal: 32 }}>
+          {user?.bio ? (
+            <Text
+              variant="body"
+              color="textMuted"
+              style={{ marginTop: 8, textAlign: 'center', paddingHorizontal: 32 }}
+            >
               {user.bio}
             </Text>
-          )}
+          ) : null}
         </View>
-
-        {/* Stats row removed — real counts will be wired in v2 */}
 
         {/* Account Information */}
         <SectionHeader title="Account Information" />
@@ -55,184 +58,94 @@ export function ProfileScreen() {
               borderRadius: theme.radii.md,
               marginHorizontal: theme.spacing.xl,
               padding: theme.spacing.lg,
+              gap: theme.spacing.md,
             },
           ]}
         >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text variant="titleSm">Account Information</Text>
-            <PressableScale scaleTo={0.95}>
-              <Icon name="pencil-outline" size={18} color="primary" />
-            </PressableScale>
-          </View>
-          <View style={{ marginTop: theme.spacing.md, gap: theme.spacing.md }}>
-            <InfoRow label="Handle" value={user?.handle ? `@${user.handle}` : 'Not set'} theme={theme} />
-            <InfoRow label="Phone" value={user?.phone ?? 'Not set'} theme={theme} />
-            <InfoRow label="Location" value={user?.location ?? 'Not set'} theme={theme} />
-          </View>
+          <InfoRow label="Handle" value={user?.handle ? `@${user.handle}` : 'Not set'} theme={theme} />
+          <InfoRow label="Email" value={user?.email ?? 'Not set'} theme={theme} />
+          <InfoRow label="Phone" value={user?.phone ?? 'Not set'} theme={theme} />
+          <InfoRow label="Date of Birth" value={user?.dateOfBirth ? formatDate(user.dateOfBirth) : 'Not set'} theme={theme} />
+          <InfoRow label="Location" value={user?.location ?? 'Not set'} theme={theme} />
         </View>
 
-        {/* Media & Links */}
-        <SectionHeader title="Media & Links" />
-        <View
-          style={{
-            flexDirection: 'row',
-            paddingHorizontal: theme.spacing.xl,
-            gap: theme.spacing.sm,
-          }}
-        >
-          {[1, 2, 3].map((i) => (
-            <View
-              key={i}
-              style={{
-                flex: 1,
-                aspectRatio: 1,
-                backgroundColor: theme.colors.surfaceContainerHigh,
-                borderRadius: theme.radii.sm,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name="image-outline" size={24} color="textMuted" />
-            </View>
-          ))}
-          <View
-            style={{
-              flex: 1,
-              aspectRatio: 1,
-              backgroundColor: theme.colors.surfaceContainerHigh,
-              borderRadius: theme.radii.sm,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text variant="caption" color="primary" style={{ fontWeight: '600' }}>
-              +12
-            </Text>
-          </View>
-        </View>
-
-        {/* Privacy & Security */}
-        <SectionHeader title="Privacy & Security" />
-        <View
-          style={[
-            styles.infoCard,
-            {
-              backgroundColor: theme.colors.surfaceContainerLowest,
-              borderRadius: theme.radii.md,
-              marginHorizontal: theme.spacing.xl,
-              padding: theme.spacing.lg,
-            },
-          ]}
-        >
-          <Text variant="caption" color="textMuted">
-            Manage your encryption, chat settings, and online visibility.
-          </Text>
-          <View style={{ flexDirection: 'row', marginTop: theme.spacing.md, gap: theme.spacing.sm }}>
-            <PressableScale
-              scaleTo={0.96}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                backgroundColor: theme.colors.surfaceContainerHigh,
-                borderRadius: theme.radii.sm,
-              }}
-            >
-              <Icon name="clipboard-text-outline" size={16} color="textSecondary" />
-              <Text variant="caption" color="textSecondary" style={{ fontWeight: '600' }}>
-                Audit Log
-              </Text>
-            </PressableScale>
-            <PressableScale
-              scaleTo={0.96}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                backgroundColor: theme.colors.primary,
-                borderRadius: theme.radii.sm,
-              }}
-            >
-              <Icon name="cog-outline" size={16} rawColor={theme.colors.onPrimary} />
-              <Text variant="caption" style={{ color: theme.colors.onPrimary, fontWeight: '600' }}>
-                Manage Settings
-              </Text>
-            </PressableScale>
-          </View>
-        </View>
-
-        {/* Preferences */}
-        <SectionHeader title="Preferences" />
+        {/* Quick Links */}
+        <SectionHeader title="Quick Links" />
         <View
           style={{
             marginHorizontal: theme.spacing.xl,
             gap: theme.spacing.sm,
           }}
         >
-          <PreferenceRow icon="bell-outline" label="Push Notifications" theme={theme} />
-          <PreferenceRow icon="bookmark-outline" label="Read Receipts" theme={theme} />
+          <QuickLinkRow
+            icon="account-edit-outline"
+            label="Edit Personal Information"
+            onPress={() => navigation.navigate('PersonalInfo')}
+            theme={theme}
+          />
+          <QuickLinkRow
+            icon="shield-lock-outline"
+            label="Privacy & Security"
+            onPress={() => navigation.navigate('Privacy')}
+            theme={theme}
+          />
         </View>
 
-        {/* Session Control */}
-        <View style={{ marginTop: theme.spacing.xxl, alignItems: 'center', gap: theme.spacing.md }}>
-          <Text variant="titleSm" color="danger">
-            Session Control
+        {/* Member since */}
+        <View style={{ alignItems: 'center', marginTop: theme.spacing.xxl }}>
+          <Text variant="micro" color="textMuted">
+            Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}
           </Text>
-          <PressableScale
-            scaleTo={0.96}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              paddingVertical: 10,
-              paddingHorizontal: 20,
-              backgroundColor: theme.colors.surfaceContainerHigh,
-              borderRadius: theme.radii.sm,
-            }}
-          >
-            <Icon name="logout" size={18} color="danger" />
-            <Text variant="caption" color="danger" style={{ fontWeight: '600' }}>
-              Sign Out Everywhere
-            </Text>
-          </PressableScale>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return iso;
+  }
+}
+
 function InfoRow({
   label,
   value,
-  theme,
+  theme: _theme,
 }: {
   label: string;
   value: string;
   theme: ReturnType<typeof useTheme>;
 }) {
+  const isEmpty = value === 'Not set';
   return (
     <View>
-      <Text variant="micro" color="textMuted" uppercase>
+      <Text variant="micro" color="textMuted" uppercase style={{ letterSpacing: 0.8 }}>
         {label}
       </Text>
-      <Text variant="caption" style={{ marginTop: 2 }}>
+      <Text
+        variant="caption"
+        color={isEmpty ? 'textMuted' : 'text'}
+        style={[{ marginTop: 2 }, isEmpty && { fontStyle: 'italic' }]}
+      >
         {value}
       </Text>
     </View>
   );
 }
 
-function PreferenceRow({
+function QuickLinkRow({
   icon,
   label,
+  onPress,
   theme,
 }: {
   icon: string;
   label: string;
+  onPress: () => void;
   theme: ReturnType<typeof useTheme>;
 }) {
   return (
@@ -246,31 +159,13 @@ function PreferenceRow({
         backgroundColor: theme.colors.surfaceContainerLowest,
         borderRadius: theme.radii.sm,
       }}
+      onTouchEnd={onPress}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}>
         <Icon name={icon} size={20} color="textSecondary" />
         <Text variant="caption">{label}</Text>
       </View>
-      <View
-        style={{
-          width: 44,
-          height: 26,
-          borderRadius: 13,
-          backgroundColor: theme.colors.primary,
-          justifyContent: 'center',
-          paddingHorizontal: 3,
-        }}
-      >
-        <View
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            backgroundColor: theme.colors.onPrimary,
-            alignSelf: 'flex-end',
-          }}
-        />
-      </View>
+      <Icon name="chevron-right" size={20} color="textMuted" />
     </View>
   );
 }

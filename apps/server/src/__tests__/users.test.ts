@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 
-import './helpers';
-import { buildTestApp, createMockUser } from './helpers';
 import { prisma } from '../lib/prisma';
 import { userRoutes } from '../routes/users';
+
+import { buildTestApp, createMockUser } from './helpers';
 
 const mockPrisma = prisma as any;
 

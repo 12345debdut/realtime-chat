@@ -1,0 +1,46 @@
+name: Feature request
+description: Propose a new capability or improvement.
+title: '[feat] '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What user / developer pain does this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Sketch of the solution. UI, API, schema — whatever applies.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: At least one other approach you rejected, and why.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Mobile
+        - Server
+        - Contracts / types
+        - Deploy / infra
+        - Docs
+        - Cross-cutting
+    validations:
+      required: true
+
+  - type: textarea
+    id: success
+    attributes:
+      label: Done criteria
+      description: How will we know this shipped well?

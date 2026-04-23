@@ -181,6 +181,7 @@ export function ChatListScreen() {
   const handleAddTagFromSheet = useCallback(() => {
     if (contextRoom) showTagAssignMenu(contextRoom);
     setContextRoom(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextRoom]);
 
   const handleDeleteFromSheet = useCallback(() => {
@@ -442,7 +443,7 @@ export function ChatListScreen() {
             <FlashList
               data={listData}
               contentContainerStyle={{ paddingBottom: 90 }}
-              keyExtractor={(item, index) =>
+              keyExtractor={(item, _index) =>
                 item.type === 'sectionHeader' ? `header-${item.title}` : item.room.id
               }
               getItemType={(item) => item.type}

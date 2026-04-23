@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { IdSchema, TimestampSchema } from './primitives';
 import { PublicUserSchema } from './auth';
+import { IdSchema, TimestampSchema } from './primitives';
 import { RoomSchema } from './rooms';
 
 export const ConnectionStatusSchema = z.enum(['pending', 'accepted', 'ignored']);

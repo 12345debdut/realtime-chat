@@ -34,6 +34,20 @@ local.properties
 *.keystore
 !debug.keystore
 .kotlin/
+# Android signing credentials — NEVER commit the release keystore or its
+# password file. key.properties references the keystore by path + password.
+android/key.properties
+android/app/release.keystore
+android/app/release-*.keystore
+# Firebase / Google services config — these carry API keys, even though
+# Google docs say they're "public". Keep them out of a public repo.
+**/google-services.json
+**/GoogleService-Info.plist
+# iOS signing / APNs
+*.p8
+*.p12
+*.mobileprovision
+*.cer
 
 # node.js
 #

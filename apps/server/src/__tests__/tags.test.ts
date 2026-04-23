@@ -1,13 +1,13 @@
 /**
  * Tests for tag routes: GET /tags, POST /tags, DELETE /tags/:id
  */
-import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 
-import './helpers';
-import { buildTestApp, createMockTag } from './helpers';
 import { prisma } from '../lib/prisma';
 import { tagRoutes } from '../routes/tags';
+
+import { buildTestApp, createMockTag } from './helpers';
 
 const mockPrisma = prisma as any;
 

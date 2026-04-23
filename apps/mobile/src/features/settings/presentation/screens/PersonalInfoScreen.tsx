@@ -433,7 +433,7 @@ function FieldRow({
   numberOfLines = 1,
   muted = false,
   onPress,
-  theme,
+  theme: _theme,
 }: {
   label: string;
   value: string | null;

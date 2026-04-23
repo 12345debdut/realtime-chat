@@ -34,7 +34,7 @@ import { roomRepository } from './RoomRepository';
 
 const TAG = 'SyncEngine';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime check for Hermes crypto
+ 
 declare const crypto: any;
 
 /** Generate a proper v4 UUID using the native crypto API (Hermes 0.64+). */
@@ -617,7 +617,6 @@ export class SyncEngine {
 
   /** Typing event — ephemeral, no DB write, just forward to presentation layer. */
   private onTyping = (raw: unknown) => {
-    console.log('Received typing event:', raw);
     const parsed = S2C_TypingSchema.safeParse(raw);
     if (!parsed.success) return;
     emitSyncEvent('typing', parsed.data);

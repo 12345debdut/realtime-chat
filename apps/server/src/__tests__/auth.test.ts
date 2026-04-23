@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
 
-import './helpers';
-import { buildTestApp, createMockUser } from './helpers';
 import { prisma } from '../lib/prisma';
+import { rotateRefresh, signAccess } from '../lib/tokens';
 import { authRoutes } from '../routes/auth';
+
+import { buildTestApp, createMockUser } from './helpers';
 
 // Mock argon2 so we don't need native bindings in tests
 vi.mock('argon2', () => ({
@@ -24,8 +25,6 @@ const mockPrisma = prisma as any;
 // We must import after the vi.mock calls in helpers have been evaluated.
 // Dynamic import isn't needed because the top-level `import './helpers'`
 // already sets up all mocks before this module's own imports resolve.
-import { rotateRefresh, signAccess, issueRefresh } from '../lib/tokens';
-
 beforeEach(() => {
   vi.clearAllMocks();
 });

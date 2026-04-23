@@ -1,6 +1,6 @@
+import { CreateTagRequestSchema } from '@rtc/contracts';
 import type { FastifyInstance } from 'fastify';
 
-import { CreateTagRequestSchema } from '@rtc/contracts';
 
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/authenticate';

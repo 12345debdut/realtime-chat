@@ -16,6 +16,7 @@ jest.mock('../features/chat/data/SyncEngine', () => ({
     connected: true,
     emit: mockSocketEmit,
   })),
+  getActiveRoomId: jest.fn(() => null),
 }));
 
 // ─── Mock HTTP module ───────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ jest.mock('../foundation/storage', () => ({
     },
     memberships: {
       query: jest.fn(),
+      create: jest.fn(),
     },
     messages: {
       query: jest.fn(),
@@ -114,6 +116,11 @@ beforeEach(() => {
   jest.clearAllMocks();
   // Re-set the database.write mock (clearAllMocks clears calls but not implementation)
   mockDb.write.mockImplementation(async (fn: () => Promise<any>) => fn());
+  // Default `memberships.query` and `roomTags.query` to empty — the syncFromServer
+  // code path always reaches them (per-room membership reconciliation); tests
+  // that care about specific membership state override this default.
+  mockQueryReturn(col.memberships.query, []);
+  mockQueryReturn(col.roomTags.query, []);
 });
 
 describe('roomRepository.syncFromServer', () => {
@@ -404,6 +411,9 @@ describe('roomRepository.upsertRoom', () => {
     let capturedRecord: any = {};
     col.rooms.create.mockImplementation((setter: (r: any) => void) => {
       setter(capturedRecord);
+      // Watermelon assigns an id after create(); the repo then queries
+      // memberships by room_id, which must not be undefined.
+      capturedRecord.id = 'local-room-new';
       return capturedRecord;
     });
 

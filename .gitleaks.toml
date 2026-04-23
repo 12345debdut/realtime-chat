@@ -1,0 +1,27 @@
+# gitleaks config — extends the default ruleset, then allowlists paths whose
+# hits are always false positives.
+#
+# How we chose each exclusion:
+#  - `Podfile.lock` entries are CocoaPods spec checksums (40-char hex). They
+#    look exactly like API keys to generic heuristics.
+#  - `.yarn/releases/*.cjs` is yarn's packed, minified CJS bundle — it's
+#    checked into the repo by corepack design and contains long identifiers
+#    that trigger the generic-api-key rule.
+#  - `yarn.lock` / `package-lock.json` integrity hashes are not secrets.
+#  - `.pbxproj` has long hex object IDs that look key-like.
+#
+# If you ever bring an SDK that ships a real API key template into one of
+# these files, re-evaluate the allowlist.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Lockfiles and vendored toolchain — noisy, never hold secrets"
+paths = [
+  '''apps/mobile/ios/Podfile\.lock''',
+  '''apps/mobile/ios/.*\.pbxproj''',
+  '''\.yarn/releases/.*\.cjs''',
+  '''yarn\.lock''',
+  '''package-lock\.json''',
+]

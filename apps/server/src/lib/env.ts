@@ -9,6 +9,11 @@ const EnvSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16),
   ACCESS_TTL_SEC: z.coerce.number().int().default(60 * 15),
   REFRESH_TTL_SEC: z.coerce.number().int().default(60 * 60 * 24 * 30),
+  // Comma-separated allowlist of origins permitted for CORS in production.
+  // Development ignores this (CORS is permissive). Mobile clients don't send
+  // an Origin header, so this only affects browser clients.
+  //   WEB_ORIGIN=https://app.example.com,https://admin.example.com
+  WEB_ORIGIN: z.string().default(''),
 });
 
 export const env = EnvSchema.parse(process.env);

@@ -11,15 +11,18 @@
     "mobile": "yarn workspace @rtc/mobile",
     "server": "yarn workspace @rtc/server",
     "contracts": "yarn workspace @rtc/contracts",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
-    "typecheck": "yarn workspaces run typecheck",
-    "test": "yarn workspaces run test"
+    "build:contracts": "yarn workspace @rtc/contracts build",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "yarn workspace @rtc/contracts typecheck && yarn workspace @rtc/server typecheck && yarn workspace @rtc/mobile typecheck",
+    "test": "yarn workspace @rtc/server test && yarn workspace @rtc/mobile test",
+    "ci": "yarn build:contracts && yarn lint && yarn typecheck && yarn test"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.30.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3"
@@ -27,7 +30,7 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "yarn@3.6.4",
   "resolutions": {
     "react": "19.2.3",
     "react-native": "0.85.0"

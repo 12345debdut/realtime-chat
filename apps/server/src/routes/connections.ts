@@ -1,11 +1,8 @@
-import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { ConnectionRequest as PrismaConnectionRequest, User as PrismaUser } from '@prisma/client';
-
 import {
   EventNames,
   SendConnectionRequestSchema,
   type ConnectionRequestWithUser,
-  type ConnectionRequest,
   type Room,
   type PublicUser,
   type SendConnectionAlreadyConnected,
@@ -16,6 +13,7 @@ import {
   type SentConnectionRequestWithUser,
   type RevokeConnectionResponse,
 } from '@rtc/contracts';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/authenticate';

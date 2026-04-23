@@ -1,13 +1,32 @@
+import { LoginRequestSchema, RegisterRequestSchema, type AuthResponse } from '@rtc/contracts';
+// eslint-disable-next-line import/default
 import argon2 from 'argon2';
 import type { FastifyInstance } from 'fastify';
 
-import { LoginRequestSchema, RegisterRequestSchema, type AuthResponse } from '@rtc/contracts';
 
 import { prisma } from '../lib/prisma';
 import { issueRefresh, rotateRefresh, signAccess } from '../lib/tokens';
 
+/**
+ * Auth routes are the most attacked surface on the server — credential
+ * stuffing, handle enumeration, refresh-token probing. Each handler below
+ * declares a tight per-IP rate limit via `config.rateLimit`. These override
+ * the global limit set in `index.ts`.
+ *
+ * Numbers chosen to be strict enough to make automated attacks painful but
+ * loose enough that a real user mistyping a password doesn't get locked out.
+ */
+const authLimit = {
+  config: {
+    rateLimit: {
+      max: 10,
+      timeWindow: '1 minute',
+    },
+  },
+};
+
 export async function authRoutes(app: FastifyInstance) {
-  app.post('/auth/register', async (req, reply) => {
+  app.post('/auth/register', authLimit, async (req, reply) => {
     const body = RegisterRequestSchema.safeParse(req.body);
     if (!body.success) return reply.code(400).send({ error: 'invalid_body', issues: body.error.issues });
 
@@ -53,7 +72,7 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.code(201).send(response);
   });
 
-  app.post('/auth/login', async (req, reply) => {
+  app.post('/auth/login', authLimit, async (req, reply) => {
     const body = LoginRequestSchema.safeParse(req.body);
     if (!body.success) return reply.code(400).send({ error: 'invalid_body' });
 
@@ -89,7 +108,7 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.send(response);
   });
 
-  app.post<{ Body: { refreshToken: string } }>('/auth/refresh', async (req, reply) => {
+  app.post<{ Body: { refreshToken: string } }>('/auth/refresh', authLimit, async (req, reply) => {
     const raw = req.body?.refreshToken;
     if (!raw) return reply.code(400).send({ error: 'missing_refresh' });
     const rotated = await rotateRefresh(raw);
