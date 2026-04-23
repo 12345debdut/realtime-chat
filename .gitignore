@@ -128,4 +128,9 @@ metro.log
 .tmp/
 tmp/
 temp/
-.claude/*
+
+# ---------- Claude Code / agent tooling ---------------------------------------
+# Local agent configs, plugin workspaces, and session state. Kept out of the
+# public repo because they're per-developer and often include agent-persona
+# prompts that aren't meant as product documentation.
+.claude/
