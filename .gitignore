@@ -128,3 +128,4 @@ metro.log
 .tmp/
 tmp/
 temp/
+.claude/*
