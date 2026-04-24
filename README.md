@@ -189,13 +189,11 @@ Two Excalidraw diagrams live at [`docs/hld/`](./docs/hld/) — one per half of t
 <table>
   <tr>
     <td align="center" width="50%">
-      <!-- Uncomment once exported from docs/hld/server.excalidraw: -->
-      <!-- <img src="docs/hld/server.png" width="560" alt="Server HLD" /> -->
+      <img src="docs/hld/server.png" width="560" alt="Server HLD" />
       <br/><sub><b>Server HLD</b> · <a href="./docs/hld/server.excalidraw">source</a> · Fastify middleware stack, Zod validation, Prisma, Socket.IO + Redis adapter, Postgres (Neon).</sub>
     </td>
     <td align="center" width="50%">
-      <!-- Uncomment once exported from docs/hld/client.excalidraw: -->
-      <!-- <img src="docs/hld/client.png" width="560" alt="Client HLD" /> -->
+      <img src="docs/hld/client.png" width="560" alt="Client HLD" />
       <br/><sub><b>Client HLD</b> · <a href="./docs/hld/client.excalidraw">source</a> · UI → state (Zustand + TanStack Query) → feature repositories → WatermelonDB / MMKV / Keychain → SyncEngine → axios + socket.io-client.</sub>
     </td>
   </tr>
