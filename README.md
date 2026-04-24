@@ -129,6 +129,29 @@ A product tour, grouped by user journey. Each caption ties the screen to the eng
   </tr>
 </table>
 
+## Walkthroughs
+
+Two screen recordings showing the product in motion — the parts that screenshots can't carry: optimistic send reconciling against server acks, typing dots animating on the UI thread, bilateral privacy toggles propagating in realtime.
+
+<table>
+  <tr>
+    <td align="center" width="60%">
+      <a href="{{https://github.com/user-attachments/assets/67167ea3-36e5-4d0a-9423-9a30e9b295fb}}">
+        <img src="docs/walkthroughs/full.jpg" width="520" alt="Full walkthrough — click to play" />
+      </a>
+      <br/><sub><b>Full walkthrough · 3m 32s</b> — sign up → discover a user → connection request + accept → first message → typing + read receipts → privacy toggle → profile edit. End-to-end product tour; every ADR-level decision shows up in the flow.</sub>
+    </td>
+    <td align="center" width="40%">
+      <a href="{{https://github.com/user-attachments/assets/2e9b3eed-53ac-4abf-b95b-a972af1a3075}}">
+        <img src="docs/walkthroughs/chat.jpg" width="380" alt="Chat walkthrough — click to play" />
+      </a>
+      <br/><sub><b>Chat walkthrough · 1m 16s</b> — focused on the room itself: message send (optimistic), typing dots, long-press context menu, sync keyboard. Reanimated 4 worklets running on the UI thread — watch frame rate hold during gestures.</sub>
+    </td>
+  </tr>
+</table>
+
+<sub>Both videos are hosted on GitHub's user-attachments CDN (not committed to the repo). See <a href="./docs/walkthroughs/README.md"><code>docs/walkthroughs/README.md</code></a> for the upload + re-record workflow.</sub>
+
 ## Try it
 
 <!-- Replace these placeholders once you have real URLs. Keep the section here -->
